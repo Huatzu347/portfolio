@@ -124,7 +124,18 @@
   .gallery {
     position: fixed; inset: 0; z-index: 3; pointer-events: none;
     opacity: 0; visibility: hidden; transition: opacity 0.6s ease, visibility 0.6s;
+    color: var(--ink);
     text-shadow: 0 1px 12px rgba(4, 6, 14, 0.6);
+  }
+  /* 淺色作品（墨）：文字改深色，底部漸層改成紙色 */
+  .gallery.light { --ink: #1c1915; --ink-soft: rgba(28, 25, 21, 0.7); --accent: #b8321e; text-shadow: 0 1px 10px rgba(244, 240, 232, 0.8); }
+  .gallery.light .g-hint { border-color: rgba(28, 25, 21, 0.22); background: rgba(244, 240, 232, 0.35); }
+  .gallery.light .g-arrows button { border-color: rgba(28, 25, 21, 0.3); background: rgba(244, 240, 232, 0.3); }
+  .gallery.light .g-arrows button:hover { background: rgba(28, 25, 21, 0.08); border-color: rgba(28, 25, 21, 0.6); }
+  body.light-art .scrim-g {
+    background:
+      radial-gradient(ellipse 60% 55% at 0% 100%, rgba(244, 240, 232, 0.6), rgba(244, 240, 232, 0) 100%),
+      radial-gradient(ellipse 35% 45% at 100% 100%, rgba(244, 240, 232, 0.5), rgba(244, 240, 232, 0) 100%);
   }
   .gallery.open { opacity: 1; visibility: visible; }
   .gallery a, .gallery button { pointer-events: auto; }
@@ -158,6 +169,15 @@
     transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
   }
   .g-info.swap { opacity: 0; transform: translateY(6px); }
+  /* 平常只顯示編號＋名稱；滑過（手機點名稱）才展開英文名、說明與操作提示 */
+  .g-info { pointer-events: auto; }
+  .g-info:focus { outline: none; }
+  .g-more {
+    display: grid; grid-template-rows: 0fr; opacity: 0;
+    transition: grid-template-rows 0.5s cubic-bezier(.2, .7, .2, 1), opacity 0.35s ease;
+  }
+  .g-more > div { overflow: hidden; min-height: 0; }
+  .g-info:hover .g-more, .g-info:focus-visible .g-more, .g-info.expanded .g-more { grid-template-rows: 1fr; opacity: 1; }
   .g-count, .g-meta { font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink-soft); }
   .g-title { font-weight: 200; font-size: clamp(44px, 6vw, 88px); line-height: 1; letter-spacing: 0.06em; margin-top: 14px; }
   .g-en {
@@ -191,7 +211,14 @@
   }
   .g-list .n { font-size: 11px; letter-spacing: 0.2em; opacity: 0.75; }
   .g-list .t { position: relative; }
-  .g-list .t em { font-style: normal; font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; margin-left: 10px; opacity: 0.7; }
+  /* 清單只顯示編號＋名稱，英文名滑過才展開，作品多也不擠 */
+  .g-list .t em {
+    font-style: normal; font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase;
+    display: inline-block; vertical-align: baseline; overflow: hidden; white-space: nowrap;
+    max-width: 0; margin-left: 0; opacity: 0;
+    transition: max-width 0.45s cubic-bezier(.7, 0, .2, 1), margin-left 0.45s, opacity 0.3s;
+  }
+  .g-list button:hover .t em, .g-list button:focus-visible .t em { max-width: 12em; margin-left: 10px; opacity: 0.7; }
   .g-list .t::after {
     content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 1px; background: currentColor;
     transform: scaleX(0); transform-origin: right center; transition: transform 0.45s cubic-bezier(.7, 0, .2, 1);
@@ -214,7 +241,7 @@
     .g-title { font-size: 44px; }
     .g-text { font-size: 13.5px; line-height: 1.75; }
     .g-nav { left: var(--gutter); flex-direction: row; justify-content: space-between; align-items: center; }
-    .g-list { flex-direction: row; gap: 18px; }
+    .g-list { flex-direction: row; gap: 12px; }
     .g-list .t { display: none; }
     .g-list .n { font-size: 13px; opacity: 1; padding-bottom: 3px; border-bottom: 1px solid transparent; }
     .g-list button[aria-current="true"] .n { border-bottom-color: currentColor; }
@@ -431,12 +458,15 @@
     <button class="g-toggle" id="g-toggle" type="button" aria-pressed="false">Hide Info</button>
     <button class="close" id="g-close" type="button" data-close>Close ✕</button>
   </div>
-  <div class="g-info" id="g-info" aria-live="polite">
+  <div class="g-info" id="g-info" tabindex="0" aria-live="polite">
     <p class="g-count"><span id="g-no">01</span> / <span id="g-total">04</span> · Dynamic Artwork</p>
-    <h2 class="g-title"><span id="g-title"></span><span class="g-en" id="g-en"></span></h2>
-    <p class="g-meta" id="g-meta"></p>
-    <p class="g-text" id="g-text"></p>
-    <p class="g-hint" id="g-hint"></p>
+    <h2 class="g-title" id="g-title"></h2>
+    <div class="g-more"><div>
+      <p class="g-en" id="g-en"></p>
+      <p class="g-meta" id="g-meta"></p>
+      <p class="g-text" id="g-text"></p>
+      <p class="g-hint" id="g-hint"></p>
+    </div></div>
   </div>
   <div class="g-nav">
     <ol class="g-list" id="g-list" aria-label="作品列表"></ol>
@@ -524,7 +554,13 @@
       hint: '滑過水面 留下波紋 · 點擊 投下一滴', touch: '滑過水面 留下波紋 · 點一下 投下一滴' },
     { slug: 'kaleidoscope', title: '萬花', en: 'Kaleidoscope', meta: '2026 · WebGL · Mirror symmetry',
       text: '把一小塊流動的顏色放進鏡子之間，世界就被複製成無限的對稱。這是這個網站最初的樣子。',
-      hint: '左右 增減鏡面 · 上下 縮放 · 拖曳 旋轉 · 點擊 換色', touch: '拖曳 改變鏡面與縮放 · 點一下 換色' }
+      hint: '左右 增減鏡面 · 上下 縮放 · 拖曳 旋轉 · 點擊 換色', touch: '拖曳 改變鏡面與縮放 · 點一下 換色' },
+    { slug: 'ink', title: '墨', en: 'Ink', meta: '2026 · WebGL · Fluid simulation', light: true,
+      text: '一滴墨落進水裡，就再也收不回來。它順著你的筆勢暈開、旋轉，在宣紙上留下只屬於這一刻的形狀。',
+      hint: '移動 攪動水面 · 按住拖曳 運筆 · 點擊 滴墨', touch: '拖曳 運筆 · 點一下 滴墨' },
+    { slug: 'fusion', title: '交融', en: 'Fusion', meta: '2026 · WebGL · Metaballs · Marbling', light: true,
+      text: '黑與銀本來互不相干，靠近之後卻再也分不開。相吸、相融，最後變成只屬於彼此的大理石紋。',
+      hint: '移動 牽引液體 · 黑銀相吸、慢慢交融 · 點擊 彈開還原', touch: '拖曳 牽引液體 · 點一下 彈開還原' }
   ];
   const coarse = matchMedia('(pointer: coarse)').matches;
   const art = { select: () => {} };   // WebGL 初始化後接上
@@ -565,6 +601,7 @@
     gList.appendChild(li);
   });
   const gButtons = gList.querySelectorAll('button');
+  if (coarse) gInfo.addEventListener('click', () => gInfo.classList.toggle('expanded'));   // 手機沒有滑過，改成點一下展開
   gList.addEventListener('click', e => { const b = e.target.closest('button'); if (b) showWork(+b.dataset.i); });
   $('g-prev').addEventListener('click', () => showWork(gIndex - 1));
   $('g-next').addEventListener('click', () => showWork(gIndex + 1));
@@ -579,6 +616,8 @@
     $('g-text').textContent = w.text;
     $('g-hint').textContent = coarse ? w.touch : w.hint;
     gButtons.forEach((b, k) => b.setAttribute('aria-current', k === i));
+    gallery.classList.toggle('light', !!w.light);            // 淺色作品（宣紙）改用深色文字
+    document.body.classList.toggle('light-art', !!w.light);
   }
   function showWork(i, instant) {
     i = (i + WORKS.length) % WORKS.length;
@@ -706,14 +745,19 @@
       return s;
     }
     const vs = compile(gl.VERTEX_SHADER, VERT);
-    function build(w) {
-      const fs = compile(gl.FRAGMENT_SHADER, HEAD + w.src);
-      if (!vs || !fs) return false;
+    function makeProgram(src) {
+      const fs = compile(gl.FRAGMENT_SHADER, HEAD + src);
+      if (!vs || !fs) return null;
       const prog = gl.createProgram();
       gl.attachShader(prog, vs); gl.attachShader(prog, fs);
       gl.bindAttribLocation(prog, 0, 'p');
       gl.linkProgram(prog);
-      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.error(gl.getProgramInfoLog(prog)); return false; }
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.error(gl.getProgramInfoLog(prog)); return null; }
+      return prog;
+    }
+    function build(w) {
+      const prog = makeProgram(w.src);
+      if (!prog) return false;
       w.prog = prog; w.U = {};
       ['uRes', 'uTime', 'uMouse'].concat(w.names).forEach(n => w.U[n] = gl.getUniformLocation(prog, n));
       return true;
@@ -751,7 +795,7 @@
        P：以畫面短邊為 1 的座標（中心為 0、往上為正），各作品共用 */
     const P = { x: 0, y: 0, lx: 0, ly: 0, vx: 0, vy: 0, inside: false, down: false, type: 'mouse', sx: 0, sy: 0, st: 0 };
     const target = { x: 0.7, y: 0.3 }, cur = { x: 0.7, y: 0.3 };   // 0..1，高光光源位置
-    const overUI = el => !!(el && el.closest && el.closest('a, button, .about.open'));
+    const overUI = el => !!(el && el.closest && el.closest('a, button, .g-info, .about.open'));
     function toP(cx, cy) {
       const m = Math.min(innerWidth, innerHeight);
       P.x = (cx / innerWidth - 0.5) * innerWidth / m;
@@ -1189,7 +1233,387 @@
       };
     }
 
-    const ART = [liquidMetal(), gravity(), ripple(), kaleidoscope()];
+    /* =================== 05 墨：水中暈開的墨（即時流體模擬） =================== */
+    function ink() {
+      const TONES = [[1.0, 1.0, 1.0], [0.82, 0.95, 1.15], [1.12, 1.0, 0.84]];   // 墨、焦墨（偏褐）、青墨（偏藍）
+      const VERMILION = [0.08, 1.3, 1.55];                                     // 朱砂：只留下紅
+      let ready = null, T = null, S = {}, vel, dye, div, curl, pres, key = '', simS = 0, dyeTex = [0, 0];
+      let time = 0, still = 0, auto = 1.5, tone = TONES[0], lastX = null, lastY = 0;
+
+      const SIM = {
+        splat: `
+          uniform sampler2D uTarget; uniform vec2 uTexel, uPoint; uniform vec3 uColor; uniform float uRadius, uAspect;
+          void main(){
+            vec2 uv = gl_FragCoord.xy * uTexel;
+            vec2 d = uv - uPoint; d.x *= uAspect;
+            gl_FragColor = vec4(texture2D(uTarget, uv).xyz + exp(-dot(d, d) / uRadius) * uColor, 1.0);
+          }`,
+        advect: `
+          uniform sampler2D uVel, uSrc; uniform vec2 uTexel, uVelTexel; uniform float uDt, uDiss;
+          void main(){
+            vec2 uv = gl_FragCoord.xy * uTexel;
+            vec2 c = uv - uDt * texture2D(uVel, uv).xy * uVelTexel;   // 沿著流速往回找
+            gl_FragColor = texture2D(uSrc, c) / (1.0 + uDiss * uDt);
+          }`,
+        divergence: `
+          uniform sampler2D uVel; uniform vec2 uTexel;
+          void main(){
+            vec2 uv = gl_FragCoord.xy * uTexel;
+            vec2 C = texture2D(uVel, uv).xy;
+            float L = texture2D(uVel, uv - vec2(uTexel.x, 0.0)).x, R = texture2D(uVel, uv + vec2(uTexel.x, 0.0)).x;
+            float B = texture2D(uVel, uv - vec2(0.0, uTexel.y)).y, T = texture2D(uVel, uv + vec2(0.0, uTexel.y)).y;
+            if (uv.x - uTexel.x < 0.0) L = -C.x;  if (uv.x + uTexel.x > 1.0) R = -C.x;   // 邊界反彈
+            if (uv.y - uTexel.y < 0.0) B = -C.y;  if (uv.y + uTexel.y > 1.0) T = -C.y;
+            gl_FragColor = vec4(0.5 * (R - L + T - B), 0.0, 0.0, 1.0);
+          }`,
+        curl: `
+          uniform sampler2D uVel; uniform vec2 uTexel;
+          void main(){
+            vec2 uv = gl_FragCoord.xy * uTexel;
+            float L = texture2D(uVel, uv - vec2(uTexel.x, 0.0)).y, R = texture2D(uVel, uv + vec2(uTexel.x, 0.0)).y;
+            float B = texture2D(uVel, uv - vec2(0.0, uTexel.y)).x, T = texture2D(uVel, uv + vec2(0.0, uTexel.y)).x;
+            gl_FragColor = vec4(0.5 * (R - L - T + B), 0.0, 0.0, 1.0);
+          }`,
+        vorticity: `
+          uniform sampler2D uVel, uCurl; uniform vec2 uTexel; uniform float uCurlK, uDt;
+          void main(){
+            vec2 uv = gl_FragCoord.xy * uTexel;
+            float L = texture2D(uCurl, uv - vec2(uTexel.x, 0.0)).x, R = texture2D(uCurl, uv + vec2(uTexel.x, 0.0)).x;
+            float B = texture2D(uCurl, uv - vec2(0.0, uTexel.y)).x, T = texture2D(uCurl, uv + vec2(0.0, uTexel.y)).x;
+            float C = texture2D(uCurl, uv).x;
+            vec2 f = 0.5 * vec2(abs(T) - abs(B), abs(R) - abs(L));
+            f = f / (length(f) + 1e-4) * uCurlK * C; f.y = -f.y;   // 把小漩渦撐起來，墨才會捲
+            vec2 v = texture2D(uVel, uv).xy + f * uDt;
+            gl_FragColor = vec4(clamp(v, -1000.0, 1000.0), 0.0, 1.0);
+          }`,
+        pressure: `
+          uniform sampler2D uPres, uDiv; uniform vec2 uTexel;
+          void main(){
+            vec2 uv = gl_FragCoord.xy * uTexel;
+            float L = texture2D(uPres, uv - vec2(uTexel.x, 0.0)).x, R = texture2D(uPres, uv + vec2(uTexel.x, 0.0)).x;
+            float B = texture2D(uPres, uv - vec2(0.0, uTexel.y)).x, T = texture2D(uPres, uv + vec2(0.0, uTexel.y)).x;
+            gl_FragColor = vec4((L + R + B + T - texture2D(uDiv, uv).x) * 0.25, 0.0, 0.0, 1.0);
+          }`,
+        gradient: `
+          uniform sampler2D uPres, uVel; uniform vec2 uTexel;
+          void main(){
+            vec2 uv = gl_FragCoord.xy * uTexel;
+            float L = texture2D(uPres, uv - vec2(uTexel.x, 0.0)).x, R = texture2D(uPres, uv + vec2(uTexel.x, 0.0)).x;
+            float B = texture2D(uPres, uv - vec2(0.0, uTexel.y)).x, T = texture2D(uPres, uv + vec2(0.0, uTexel.y)).x;
+            gl_FragColor = vec4(texture2D(uVel, uv).xy - 0.5 * vec2(R - L, T - B), 0.0, 1.0);
+          }`,
+        scale: `
+          uniform sampler2D uSrc; uniform vec2 uTexel; uniform float uK;
+          void main(){ gl_FragColor = texture2D(uSrc, gl_FragCoord.xy * uTexel) * uK; }`
+      };
+
+      function renderable(type) {
+        const t = gl.createTexture(), f = gl.createFramebuffer();
+        gl.bindTexture(gl.TEXTURE_2D, t);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 4, 4, 0, gl.RGBA, type, null);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+        const ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.deleteTexture(t); gl.deleteFramebuffer(f);
+        return ok;
+      }
+      function setup() {
+        const hf = gl.getExtension('OES_texture_half_float'), hfl = gl.getExtension('OES_texture_half_float_linear');
+        const fl = gl.getExtension('OES_texture_float'), fll = gl.getExtension('OES_texture_float_linear');
+        const cands = [];
+        if (hf) cands.push([hf.HALF_FLOAT_OES, !!hfl]);
+        if (fl) cands.push([gl.FLOAT, !!fll]);
+        for (const [type, lin] of cands) if (renderable(type)) { T = { type, filter: lin ? gl.LINEAR : gl.NEAREST }; break; }
+        if (!T) return false;
+        for (const k in SIM) { const prog = makeProgram(SIM[k]); if (!prog) return false; S[k] = { prog, U: {} }; }
+        return true;
+      }
+      function target(w, h) {
+        const tex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, T.filter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, T.filter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, T.type, null);
+        const fb = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+        gl.viewport(0, 0, w, h);
+        gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+        return { tex, fb, w, h, texel: [1 / w, 1 / h] };
+      }
+      function pingpong(w, h) {
+        let a = target(w, h), b = target(w, h);
+        return { get read() { return a; }, get write() { return b; }, swap() { const t = a; a = b; b = t; } };
+      }
+      function free(t) { if (!t) return; [t.read, t.write].forEach(x => { gl.deleteTexture(x.tex); gl.deleteFramebuffer(x.fb); }); }
+      function freeOne(t) { if (t) { gl.deleteTexture(t.tex); gl.deleteFramebuffer(t.fb); } }
+      // 模擬網格：流速 128 格、墨色電腦 1024／手機 512（短邊），與畫面同比例
+      function allocate() {
+        const a = innerWidth / innerHeight;
+        const wh = s => a >= 1 ? [Math.round(s * a), s] : [s, Math.round(s / a)];
+        const sv = wh(128), sd = wh(isMobile ? 512 : 1024), k = sv.join() + '/' + sd.join();
+        if (k === key) return false;
+        const oldV = vel, oldD = dye;
+        free(pres); freeOne(div); freeOne(curl);
+        vel = pingpong(...sv); pres = pingpong(...sv); dye = pingpong(...sd);
+        div = target(...sv); curl = target(...sv);
+        simS = Math.min(...sv); key = k;
+        // 視窗大小改變（例如手機網址列收合）時，把原本的墨搬到新的紙上，不會被清掉
+        if (oldV) {
+          pass('scale', vel.read, { uSrc: oldV.read }, { uK: 1 });
+          pass('scale', dye.read, { uSrc: oldD.read }, { uK: 1 });
+          free(oldV); free(oldD);
+        }
+        return !oldV;   // 只有第一次需要鋪上起始的墨
+      }
+      function pass(name, out, tex, uni) {
+        const s = S[name];
+        gl.useProgram(s.prog);
+        const loc = n => (n in s.U) ? s.U[n] : (s.U[n] = gl.getUniformLocation(s.prog, n));
+        let unit = 0;
+        for (const n in tex) {
+          gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tex[n].tex);
+          gl.uniform1i(loc(n), unit++);
+        }
+        for (const n in uni) {
+          const v = uni[n];
+          if (typeof v === 'number') gl.uniform1f(loc(n), v);
+          else if (v.length === 2) gl.uniform2fv(loc(n), v); else gl.uniform3fv(loc(n), v);
+        }
+        gl.uniform2fv(loc('uTexel'), out.texel);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, out.fb);
+        gl.viewport(0, 0, out.w, out.h);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      }
+      // 在畫面座標（短邊 = 1）加一筆：force = 流速，color = 墨量
+      function splat(x, y, fx, fy, color, r) {
+        const [ex, ey] = ext(), u = [x / (2 * ex) + 0.5, y / (2 * ey) + 0.5];
+        const rad = Math.pow(r / (2 * ey), 2), asp = ex / ey;
+        if (fx || fy) { pass('splat', vel.write, { uTarget: vel.read }, { uPoint: u, uColor: [fx * simS, fy * simS, 0], uRadius: rad, uAspect: asp }); vel.swap(); }
+        if (color) { pass('splat', dye.write, { uTarget: dye.read }, { uPoint: u, uColor: color, uRadius: rad, uAspect: asp }); dye.swap(); }
+      }
+      const mul = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+      function drop(x, y, color, amt, r) {
+        splat(x, y, 0, 0, mul(color, amt), r);
+        for (let i = 0; i < 3; i++) {   // 落水時往外推一點，墨才會開花
+          const a = Math.random() * Math.PI * 2, d = r * 0.8;
+          splat(x + Math.cos(a) * d, y + Math.sin(a) * d, Math.cos(a) * 0.5, Math.sin(a) * 0.5, null, r * 1.4);
+        }
+      }
+      function seed() {
+        const [ex, ey] = ext();
+        drop(-ex * 0.35, ey * 0.2, TONES[0], 2.2, 0.05);
+        drop(ex * 0.15, -ey * 0.25, TONES[1], 1.8, 0.04);
+        drop(ex * 0.42, ey * 0.3, TONES[2], 1.4, 0.035);
+        drop(ex * 0.55, -ey * 0.45, VERMILION, 1.2, 0.022);
+      }
+
+      return {
+        names: ['uDye', 'uSim'],
+        src: `
+          uniform sampler2D uDye;
+          uniform float uSim;
+          void main(){
+            float m = min(uRes.x, uRes.y);
+            vec2 uv = gl_FragCoord.xy / uRes;
+            vec2 p = (gl_FragCoord.xy - 0.5 * uRes) / m;
+            vec3 a = uSim > 0.5 ? texture2D(uDye, uv).rgb
+                                : vec3(smoothstep(0.5, 0.85, fbm(p * 2.0 + uTime * 0.02)) * 0.9);
+            // 宣紙：長纖維＋細顆粒，墨會被纖維吃進去
+            float fib = fbm(vec2(p.x * 60.0, p.y * 9.0)) * 0.6 + fbm(p * 140.0) * 0.4;
+            vec3 paper = vec3(0.945, 0.925, 0.88) * (0.965 + 0.05 * fib);
+            a *= 0.85 + 0.35 * fib;
+            vec3 col = paper * exp(-a * 2.4);
+            col *= 1.0 - 0.16 * smoothstep(0.7, 1.7, length(p));
+            col += (hash(gl_FragCoord.xy + fract(uTime * 7.0) * 113.0) - 0.5) / 255.0;
+            gl_FragColor = vec4(col, 1.0);
+          }`,
+        enter() {
+          if (ready === null) ready = setup();
+          if (ready && allocate()) seed();
+          lastX = null;
+        },
+        down() {
+          if (!ready) return;
+          tone = TONES[Math.floor(Math.random() * TONES.length)];   // 每一筆的墨色略有不同
+          drop(P.x, P.y, tone, 1.6, 0.03);
+          lastX = P.x; lastY = P.y; still = 0;
+        },
+        frame(dt, U) {
+          time += dt * speed;
+          if (ready) {
+            allocate();   // 視窗比例改變：沿用原本的墨
+            const sdt = Math.min(dt, 1 / 30) * speed;
+            // 互動：移動＝攪動水面；按住拖曳＝運筆（沿路補點，筆畫才連續）
+            if (P.inside && (Math.abs(P.vx) + Math.abs(P.vy) > 0.01)) {
+              still = 0;
+              if (P.down && lastX !== null) {
+                const dx = P.x - lastX, dy = P.y - lastY, n = Math.min(12, Math.ceil(Math.hypot(dx, dy) / 0.008));
+                for (let i = 1; i <= n; i++) {
+                  const f = i / n;
+                  splat(lastX + dx * f, lastY + dy * f, P.vx * 0.8 / n, P.vy * 0.8 / n, mul(tone, 0.32 / Math.sqrt(n)), 0.011);
+                }
+              } else if (!P.down) splat(P.x, P.y, P.vx * 0.5, P.vy * 0.5, null, 0.04);
+              lastX = P.x; lastY = P.y;
+            } else {
+              still += dt;
+              if (!P.down) lastX = null;
+            }
+            // 太久沒人碰：偶爾自己落一滴，偶爾是朱砂
+            if (still > 5) {
+              auto -= dt * speed;
+              if (auto <= 0) {
+                auto = 2.5 + Math.random() * 2.5;
+                const [ex, ey] = ext();
+                drop((Math.random() * 2 - 1) * ex * 0.8, (Math.random() * 2 - 1) * ey * 0.75,
+                     Math.random() < 0.18 ? VERMILION : TONES[Math.floor(Math.random() * 3)], 1.4, 0.03);
+              }
+            }
+            pass('curl', curl, { uVel: vel.read });
+            pass('vorticity', vel.write, { uVel: vel.read, uCurl: curl }, { uCurlK: 22, uDt: sdt }); vel.swap();
+            pass('divergence', div, { uVel: vel.read });
+            pass('scale', pres.write, { uSrc: pres.read }, { uK: 0.8 }); pres.swap();
+            for (let i = 0; i < 20; i++) { pass('pressure', pres.write, { uPres: pres.read, uDiv: div }); pres.swap(); }
+            pass('gradient', vel.write, { uPres: pres.read, uVel: vel.read }); vel.swap();
+            pass('advect', vel.write, { uVel: vel.read, uSrc: vel.read }, { uVelTexel: vel.read.texel, uDt: sdt, uDiss: 0.25 }); vel.swap();
+            pass('advect', dye.write, { uVel: vel.read, uSrc: dye.read }, { uVelTexel: vel.read.texel, uDt: sdt, uDiss: 0.045 }); dye.swap();
+          }
+          // 回到畫面：畫出宣紙上的墨
+          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+          gl.viewport(0, 0, canvas.width, canvas.height);
+          gl.useProgram(this.prog);
+          if (ready) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, dye.read.tex); }
+          gl.uniform1i(U.uDye, 0);
+          gl.uniform1f(U.uSim, ready ? 1 : 0);
+          gl.uniform1f(U.uTime, time);
+        }
+      };
+    }
+
+    /* =================== 06 交融：黑與銀相吸、融合成大理石紋 =================== */
+    function fusion() {
+      const N = 10, balls = [], arr = new Float32Array(N * 4);
+      let time = 0;
+      function reset() {
+        balls.length = 0;
+        const [ex, ey] = ext();
+        for (let i = 0; i < 8; i++) {
+          const c = i % 2;   // 0 = 黑，1 = 銀
+          balls.push({ x: (Math.random() * 2 - 1) * ex * 0.6, y: (Math.random() * 2 - 1) * ey * 0.55,
+                       vx: 0, vy: 0, r: 0, tr: 0.075 + Math.random() * 0.05, c, c0: c, s: Math.random() * 100, un: 0 });
+        }
+      }
+      return {
+        names: ['uBalls'],
+        src: `
+          uniform vec4 uBalls[10];   // xy = 位置，z = 半徑，w = 顏色（0 黑 … 1 銀）
+          float field(vec2 p, out vec2 g, out float cm){
+            float f = 0.0, fc = 0.0; g = vec2(0.0);
+            for (int i = 0; i < 10; i++){
+              vec4 b = uBalls[i];
+              vec2 d = p - b.xy;
+              float q = dot(d, d) + 1e-5, r2 = b.z * b.z, w = r2 / q;
+              f += w; fc += w * b.w;
+              g -= 2.0 * r2 * d / (q * q);
+            }
+            cm = fc / max(f, 1e-5);   // 這一點是黑多還是銀多
+            return f;
+          }
+          // 攝影棚：下方淺色托盤、上方棚頂、兩盞柔光箱
+          vec3 env(vec3 r){
+            float y = r.y;
+            vec3 up = mix(vec3(0.1), vec3(0.88, 0.89, 0.92), smoothstep(0.05, 0.85, y));
+            vec3 c = mix(vec3(0.62, 0.6, 0.57), up, smoothstep(-0.06, 0.06, y));
+            c *= 1.0 - 0.6 * exp(-abs(y) * 30.0);                                    // 地平線暗線，讓鏡面更立體
+            c += smoothstep(0.86, 0.94, dot(r, normalize(vec3(-0.5, 0.65, 0.57)))) * 1.6;
+            c += vec3(0.75, 0.85, 1.0) * smoothstep(0.9, 0.96, dot(r, normalize(vec3(0.7, 0.25, 0.67)))) * 0.9;
+            return c;
+          }
+          void main(){
+            float m = min(uRes.x, uRes.y);
+            vec2 p = (gl_FragCoord.xy - 0.5 * uRes) / m;
+            vec2 g; float cm;
+            float f = field(p, g, cm);
+
+            // 液面：把場轉成圓潤的高度，算法線
+            float H = max(1.0 - 1.0 / max(f, 1e-4), 0.0);
+            vec2 gz = 0.1 * (g / (f * f)) / (2.0 * sqrt(max(H, 0.002)));
+            vec3 n = normalize(vec3(-gz, 1.0));
+            vec3 r = reflect(normalize(vec3(p * 0.3, -1.0)), n);
+            vec3 E = env(r);
+
+            // 黑銀交界處用扭曲的雜訊打散，形成流動的大理石紋
+            float mixness = 4.0 * cm * (1.0 - cm);
+            vec2 w = vec2(fbm(p * 3.0 + uTime * 0.07), fbm(p * 3.0 + 4.1 - uTime * 0.06));
+            float nz = fbm(p * 4.5 + 1.8 * w);
+            float k = smoothstep(0.42, 0.58, clamp(cm + (nz - 0.5) * 2.2 * mixness, 0.0, 1.0));
+            vec3 silver = E * vec3(0.95, 0.96, 0.98);
+            vec3 black = vec3(0.008) + E * (0.06 + 0.55 * pow(1.0 - n.z, 2.0));   // 黑：只在邊緣反光
+            vec3 liq = mix(black, silver, k);
+            vec2 mp = mouseP(m);
+            vec3 L = normalize(vec3(mp - p, 0.8));
+            float sd = max(dot(reflect(-L, n), vec3(0.0, 0.0, 1.0)), 0.0);
+            liq += vec3(1.0, 0.97, 0.92) * (pow(sd, 260.0) * 1.1 + pow(sd, 26.0) * 0.06);
+
+            // 托盤：髮絲紋金屬＋液體底下的柔和陰影
+            vec3 dish = vec3(0.79, 0.775, 0.75) * (0.94 + 0.06 * fbm(vec2(p.x * 3.0, p.y * 90.0)));
+            dish *= 1.0 - 0.4 * smoothstep(0.25, 1.0, f);
+
+            float aa = clamp(0.5 + (f - 1.0) / max(length(g), 1e-3) * m / 1.5, 0.0, 1.0);
+            gl_FragColor = vec4(finish(mix(dish, liq, aa), p), 1.0);
+          }`,
+        enter() { if (!balls.length) reset(); },
+        // 點擊：從游標處彈開，顏色慢慢還原成原本的黑與銀
+        down() {
+          for (const b of balls) {
+            const dx = b.x - P.x, dy = b.y - P.y, d = Math.hypot(dx, dy) + 1e-3, k = 1.1 / (d + 0.25);
+            b.vx += dx / d * k + (Math.random() - 0.5) * 0.4; b.vy += dy / d * k + (Math.random() - 0.5) * 0.4;
+            b.un = 1.6;
+          }
+        },
+        frame(dt, U) {
+          time += dt * speed;
+          const [ex, ey] = ext(), sdt = Math.min(dt, 1 / 30) * speed;
+          for (const b of balls) {
+            let ax = Math.sin(time * 0.37 + b.s) * 0.05, ay = Math.cos(time * 0.29 + b.s * 1.3) * 0.05;
+            if (P.inside) {
+              const dx = P.x - b.x, dy = P.y - b.y, d = Math.hypot(dx, dy) + 1e-4, f = Math.min(1.2, 0.08 / (d * d + 0.03));
+              ax += dx / d * f; ay += dy / d * f;
+            } else { ax -= b.x * 0.08; ay -= b.y * 0.08; }
+            for (const o of balls) {
+              if (o === b) continue;
+              const dx = o.x - b.x, dy = o.y - b.y, d = Math.hypot(dx, dy) + 1e-4, dc = Math.abs(o.c - b.c);
+              if (dc > 0.15 && b.un <= 0) {   // 黑與銀相吸（顏色差越多越吸）
+                const f = Math.min(0.9, 0.06 * dc / (d * d + 0.02));
+                ax += dx / d * f; ay += dy / d * f;
+              }
+              const min = (b.r + o.r) * 0.7;   // 不會整個縮成一點
+              if (d < min) { const k = (min - d) * 7; ax -= dx / d * k; ay -= dy / d * k; }
+              if (d < (b.r + o.r) * 0.95 && b.un <= 0) b.c += (o.c - b.c) * 0.12 * sdt;   // 碰在一起就慢慢交融
+            }
+            if (b.un > 0) { b.un -= sdt; b.c += (b.c0 - b.c) * (1 - Math.pow(0.05, sdt)); }
+            const wx = ex - b.r, wy = ey - b.r;
+            if (b.x > wx) ax -= (b.x - wx) * 20; if (b.x < -wx) ax += (-wx - b.x) * 20;
+            if (b.y > wy) ay -= (b.y - wy) * 20; if (b.y < -wy) ay += (-wy - b.y) * 20;
+            const damp = Math.pow(0.45, dt);
+            b.vx = (b.vx + ax * sdt) * damp; b.vy = (b.vy + ay * sdt) * damp;
+            b.x += b.vx * dt; b.y += b.vy * dt;
+            b.r += (b.tr - b.r) * (1 - Math.pow(0.05, dt));
+          }
+          arr.fill(0);
+          balls.forEach((b, i) => arr.set([b.x, b.y, b.r, b.c], i * 4));
+          gl.uniform4fv(U.uBalls, arr);
+          gl.uniform1f(U.uTime, time);
+        }
+      };
+    }
+
+    const ART = [liquidMetal(), gravity(), ripple(), kaleidoscope(), ink(), fusion()];
     let active = 0, pending = -1, fadeT = 0;
     function activate(i) {
       const w = ART[i];
@@ -1233,6 +1657,7 @@
       P.lx = P.x; P.ly = P.y;
 
       const w = ART[active];
+      gl.useProgram(w.prog);   // 墨會在模擬過程切換 program，每幀都重新指定
       gl.uniform2f(w.U.uRes, canvas.width, canvas.height);
       gl.uniform2f(w.U.uMouse, cur.x, cur.y);
       w.frame(dt, w.U);
