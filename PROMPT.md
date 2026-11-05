@@ -28,13 +28,47 @@
 版面：
 - 左上角大標題，分兩行：「TZU HUA」／「WANG XART®」，® 為右上角小字
 - 標題下方是選單：Dynamic Artwork / About Me
-- 點選單會從右側滑出半透明毛玻璃面板（內容先放佔位文字與作品格），
+- 點 Dynamic Artwork 會從右側滑出半透明毛玻璃面板（內容先放佔位文字與作品格），
   可用 Close 按鈕或 Esc 關閉
+- 點 About Me 會開啟全螢幕頁面（見下方「About Me」）
 - 左下角一行版權文字：TZU HUA WANG® ALL RIGHTS RESERVED · SINCE 2026
   （小字、全大寫、字距加寬、單行）
 - 字體用細的無襯線字（Jost），選單滑過時有底線從左滑入的動畫
 - 文字左側加深色漸層遮罩與淡淡文字陰影，確保在亮色金屬上也看得清楚
 - 瀏覽器分頁標題：TZU HUA WANG XART®
+
+About Me（全螢幕頁）：
+- 點 About Me 淡入一個深色半透明毛玻璃全螢幕頁，液態金屬在後面隱約流動；
+  網址 #about 可直接開啟，Close 按鈕或 Esc 關閉；內容區塊依序淡入
+- 開啟時背景自動降低解析度（已被模糊，不需高畫質），關閉後恢復
+- 電腦版左右兩欄（約 3:4），手機版單欄由上往下捲
+- 左欄：
+  - 大字標語兩行：「保持好奇的孩子，」／「把才華做成作品。」
+    每行固定不換行；「華」字有緩慢流動的金屬光澤（呼應名字）
+  - 英文副標：Still the curious kid — turning talent, hua (華), into things people can touch.
+  - 去背全身照（portrait.webp，透明背景、已移除 EXIF/GPS），
+    外圍白色貼紙邊，放在「貼紙拼貼」背景上：
+    - 微傾斜的天空藍雲朵底卡＋紙張顆粒、一條膠帶、橘白格紋紙膠帶
+    - 粗黑線手繪貼紙（白邊）：橘色愛心、黑框粉紅方塊、綠色鋸齒線、綠色星星、紫色爆炸星
+    - 標籤：黃色「STILL CURIOUS」、橘色「華 = TALENT」
+    - 收據：XART STUDIO / TAIPEI · KINMEN · TAIPEI，品項 ROBOTICS、HCI、
+      3D PRINTING、PSYCHOLOGY、UX，合計 TOTAL CURIOSITY ∞，附條碼
+    - 風格參考貼紙拼貼（Y2K）風，但所有圖案原創，不使用任何既有品牌素材
+    - 標籤與收據在照片後方、貼紙在最上層，不遮住臉和身體
+    - 開啟頁面時貼紙一張張彈出貼上（減少動態效果時不播放）
+    - 拼貼框維持接近直式比例，高度隨視窗調整，一打開就看得到全身
+- 右欄：
+  - Bio（中文，每句在電腦版維持一行，手機版平均分行、不留孤字）：
+    生於台北，在金門長大，再回到台北求學與工作。
+    從電機電子出發，一路走進互動設計，畢業於國立臺北科技大學互動設計系碩士班。
+    研究成果發表於 IEEE VR 與 SIGGRAPH Asia，現在是一名機器人研究員。
+    專長橫跨人機互動、機器人、3D 列印原型製作與後處理、心理學與使用者經驗。
+    我相信好的設計與科技，能帶來前所未有的體驗，並真正回應使用它的人。
+  - 下方附同內容的英文段落（較小、較淡）
+  - Contact：LinkedIn（https://www.linkedin.com/in/iitzhuazz/）與
+    Google Scholar（https://scholar.google.com.tw/citations?user=D-Be9pgAAAAJ&hl=zh-TW），
+    並排、新分頁開啟、底線動畫
+- 標語與內文字級依欄寬縮放（container query），確保在各種 Mac 螢幕寬度都不會多出幾個字換行
 
 畫質與效能：
 - 依螢幕像素密度繪製（Retina 最高 2x），不要被瀏覽器放大而模糊；
