@@ -198,7 +198,11 @@
     void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
 
   const frag = `
+    #ifdef GL_FRAGMENT_PRECISION_HIGH
+    precision highp float;     // 高精度：避免手機上長時間播放後出現格狀、色階斷層
+    #else
     precision mediump float;
+    #endif
     uniform vec2  uRes;
     uniform float uTime;
     uniform float uFlow;      // 累積流動距離（右→左）
@@ -207,7 +211,12 @@
     uniform vec3  uB;         // 目前雙色組合：顏色 B
     uniform vec3  uDent;      // 滑鼠凹洞：xy = 位置，z = 強度 0..1
 
-    float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    // 不用 sin 的雜湊，數值變大時依然穩定、不會出現雜訊顆粒
+    float hash(vec2 p){
+      vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+      p3 += dot(p3, p3.yzx + 33.33);
+      return fract((p3.x + p3.y) * p3.z);
+    }
     float noise(vec2 p){
       vec2 i = floor(p), f = fract(p);
       vec2 u = f * f * (3.0 - 2.0 * f);
@@ -240,7 +249,7 @@
 
     // 雙色金屬反射帶
     vec3 metal(float env){
-      float b = smoothstep(0.15, 0.85, 0.5 + 0.5 * sin(env * 6.2831853));
+      float b = smoothstep(0.25, 0.75, 0.5 + 0.5 * sin(env * 6.2831853));   // 色帶邊緣更俐落
       return mix(uA, uB, b);
     }
 
@@ -269,9 +278,11 @@
       float hx = height(p + vec2(e, 0.0));
       float hy = height(p + vec2(0.0, e));
       vec3 n = normalize(vec3(-(hx - h) / e, -(hy - h) / e, 0.9));
-      vec3 col = shade(n, h, p, 0.0, 48.0, 0.9);
+      vec3 col = shade(n, h, p, 0.0, 80.0, 1.1);   // 高光更集中、更亮
 
       col *= 1.0 - 0.3 * smoothstep(0.6, 1.6, length(sp));
+      // 微量抖色，消除平滑漸層上的色階帶
+      col += (hash(gl_FragCoord.xy + fract(uTime * 7.0) * 113.0) - 0.5) / 255.0;
       gl_FragColor = vec4(col, 1.0);
     }`;
 
@@ -300,8 +311,9 @@
 
   /* 解析度：限制 DPR，並依實際幀率自動調整 */
   const isMobile = matchMedia('(pointer: coarse)').matches || innerWidth < 768;
-  const maxScale = Math.min(window.devicePixelRatio || 1, isMobile ? 1.0 : 1.25);
-  let scale = maxScale;
+  // 以螢幕實際像素密度繪製（Retina 最高 2x），避免被瀏覽器放大而模糊
+  const maxScale = Math.min(window.devicePixelRatio || 1, 2);
+  let scale = isMobile ? Math.min(maxScale, 1.5) : maxScale;   // 手機先保守起步，順暢再往上提
   function resize() {
     const w = Math.max(1, Math.round(innerWidth * scale));
     const h = Math.max(1, Math.round(innerHeight * scale));
@@ -445,8 +457,9 @@
     acc += dt; frames++;
     if (frames >= 60) {
       const avg = acc / frames;
-      if (avg > 1 / 45 && scale > 0.5) { scale = Math.max(0.5, scale * 0.85); resize(); }
-      else if (avg < 1 / 58 && scale < maxScale) { scale = Math.min(maxScale, scale * 1.05); resize(); }
+      // 自適應畫質：掉幀才小幅降低，順暢時逐步回到最高畫質
+      if (avg > 1 / 48 && scale > 0.75) { scale = Math.max(0.75, scale * 0.9); resize(); }
+      else if (avg < 1 / 57 && scale < maxScale) { scale = Math.min(maxScale, scale * 1.08); resize(); }
       frames = 0; acc = 0;
     }
     requestAnimationFrame(loop);
