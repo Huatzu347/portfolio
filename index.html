@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TZU HUA WANG</title>
+<meta name="description" content="TZU HUA WANG — 3D printing workshop, Music Zone, Dynamic Artwork">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #fff6ec;
+    --ink-soft: rgba(255, 246, 236, 0.72);
+    --accent: #ffb27a;
+    --bg: #2a1233;
+    --gutter: clamp(16px, 4vw, 56px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: linear-gradient(120deg, #0b0c0f 0%, #b8bdc6 50%, #0b0c0f 100%);
+    color: var(--ink);
+    font-family: "Jost", "Helvetica Neue", "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+    font-weight: 300;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  canvas#bg {
+    position: fixed; inset: 0;
+    width: 100%; height: 100%;
+    display: block;
+    z-index: 0;
+  }
+  /* 左側淡出暗層，讓文字可讀 */
+  .scrim {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(90deg, rgba(6, 10, 30, 0.78) 0%, rgba(6, 10, 30, 0.45) 35%, rgba(6, 10, 30, 0) 65%);
+  }
+  .ui {
+    position: fixed; inset: 0; z-index: 2;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: calc(var(--gutter) + env(safe-area-inset-top)) var(--gutter) calc(var(--gutter) + env(safe-area-inset-bottom));
+    pointer-events: none;
+  }
+  .ui > * { pointer-events: auto; }
+  .ui { text-shadow: 0 1px 12px rgba(6, 10, 30, 0.55); }
+  h1 {
+    font-weight: 200;
+    font-size: clamp(44px, 9vw, 128px);
+    line-height: 0.92;
+    letter-spacing: 0.04em;
+    text-shadow: 0 2px 30px rgba(60, 10, 60, 0.35);
+  }
+  nav ul {
+    list-style: none;
+    margin-top: clamp(20px, 3.5vw, 40px);
+    display: flex; flex-direction: column; gap: clamp(8px, 1.2vw, 14px);
+  }
+  nav a {
+    position: relative;
+    display: inline-block;
+    color: var(--ink);
+    text-decoration: none;
+    font-size: clamp(15px, 1.6vw, 20px);
+    letter-spacing: 0.12em;
+    padding: 4px 0;
+    text-transform: uppercase;
+  }
+  nav a::after {
+    content: "";
+    position: absolute; left: 0; bottom: 0;
+    width: 100%; height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right center;
+    transition: transform 0.45s cubic-bezier(.7, 0, .2, 1);
+  }
+  nav a:hover::after, nav a:focus-visible::after, nav a[aria-current="true"]::after {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+  nav a:focus-visible { outline: none; }
+  .intro {
+    max-width: 34ch;
+    font-size: clamp(14px, 1.15vw, 16px);
+    line-height: 1.75;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+  }
+  .intro small {
+    display: block; margin-top: 14px;
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.7;
+  }
+
+  /* 內容面板 */
+  .panel {
+    position: fixed; z-index: 3;
+    top: 0; right: 0; bottom: 0;
+    width: min(460px, 100%);
+    padding: calc(var(--gutter) + env(safe-area-inset-top)) var(--gutter) var(--gutter);
+    background: rgba(36, 14, 44, 0.62);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    border-left: 1px solid rgba(255, 246, 236, 0.12);
+    transform: translateX(105%);
+    transition: transform 0.6s cubic-bezier(.7, 0, .2, 1);
+    overflow-y: auto;
+  }
+  .panel.open { transform: translateX(0); }
+  .panel h2 { font-weight: 200; font-size: clamp(28px, 3vw, 40px); letter-spacing: 0.04em; margin-bottom: 18px; }
+  .panel p { color: var(--ink-soft); line-height: 1.8; font-size: 15px; }
+  .panel .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+  .panel .grid div {
+    aspect-ratio: 1; border-radius: 4px;
+    background: linear-gradient(135deg, rgba(255,178,122,.35), rgba(162,64,127,.35));
+    border: 1px solid rgba(255,246,236,.12);
+  }
+  .close {
+    position: absolute; top: calc(var(--gutter) + env(safe-area-inset-top) - 6px); right: var(--gutter);
+    background: none; border: 0; color: var(--ink); cursor: pointer;
+    font: inherit; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; padding: 6px 0;
+  }
+
+  @media (max-width: 640px) {
+    .scrim {
+      background: linear-gradient(180deg, rgba(6,10,30,.75) 0%, rgba(6,10,30,.35) 40%, rgba(6,10,30,.2) 65%, rgba(6,10,30,.7) 100%);
+    }
+    .intro { max-width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    nav a::after, .panel { transition: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="scrim"></div>
+
+<main class="ui">
+  <header>
+    <h1>TZU HUA<br>WANG</h1>
+    <nav aria-label="主選單">
+      <ul>
+        <li><a href="#digital" data-panel="digital">3D printing workshop</a></li>
+        <li><a href="#metal" data-panel="metal">Music Zone</a></li>
+        <li><a href="#dynamic" data-panel="dynamic">Dynamic Artwork</a></li>
+        <li><a href="#about" data-panel="about">About Me</a></li>
+      </ul>
+    </nav>
+  </header>
+  <p class="intro">每件作品都是一場關於節奏與呼吸的實驗</p>
+</main>
+
+<aside class="panel" id="panel" aria-hidden="true">
+  <button class="close" id="close" type="button">Close ✕</button>
+  <h2 id="panel-title"></h2>
+  <p id="panel-text"></p>
+  <div class="grid" id="panel-grid"></div>
+</aside>
+
+<script>
+(() => {
+  /* ---------- 內容面板 ---------- */
+  const CONTENT = {
+    digital: ["3D printing workshop", "3D 列印工作坊的作品與紀錄。這裡之後可以放照片與說明。", 6],
+    metal:   ["Music Zone", "音樂相關的創作與作品。這裡之後可以放音檔或影片連結。", 4],
+    dynamic: ["Dynamic Artwork", "即時運算的動態作品與影像裝置，讓畫面隨時間與觀者變化。", 4],
+    about:   ["About Me", "TZU HUA WANG 的自我介紹與聯絡方式。", 0]
+  };
+  const panel = document.getElementById('panel');
+  const links = document.querySelectorAll('nav a');
+  function openPanel(key) {
+    const c = CONTENT[key]; if (!c) return closePanel();
+    document.getElementById('panel-title').textContent = c[0];
+    document.getElementById('panel-text').textContent = c[1];
+    document.getElementById('panel-grid').innerHTML = '<div></div>'.repeat(c[2]);
+    links.forEach(a => a.setAttribute('aria-current', a.dataset.panel === key));
+    panel.classList.add('open'); panel.setAttribute('aria-hidden', 'false');
+  }
+  function closePanel() {
+    panel.classList.remove('open'); panel.setAttribute('aria-hidden', 'true');
+    links.forEach(a => a.setAttribute('aria-current', 'false'));
+    if (location.hash) history.replaceState(null, '', location.pathname);
+  }
+  window.addEventListener('hashchange', () => openPanel(location.hash.slice(1)));
+  document.getElementById('close').addEventListener('click', closePanel);
+  window.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+  if (location.hash) openPanel(location.hash.slice(1));
+
+  /* ---------- WebGL 萬花筒背景 ---------- */
+  const canvas = document.getElementById('bg');
+  const gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'high-performance' });
+  if (!gl) return; // 不支援時保留 CSS 漸層背景
+
+  const vert = `
+    attribute vec2 p;
+    void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
+
+  const frag = `
+    precision mediump float;
+    uniform vec2  uRes;
+    uniform float uTime;
+    uniform float uFlow;      // 累積流動距離（右→左）
+    uniform vec2  uMouse;     // 滑鼠位置 0..1
+    uniform vec3  uA;         // 目前雙色組合：顏色 A
+    uniform vec3  uB;         // 目前雙色組合：顏色 B
+
+    float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float noise(vec2 p){
+      vec2 i = floor(p), f = fract(p);
+      vec2 u = f * f * (3.0 - 2.0 * f);
+      return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
+                 mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+    }
+    float fbm(vec2 p){
+      float v = 0.0, a = 0.5;
+      mat2 m = mat2(1.6, 1.2, -1.2, 1.6);
+      for (int i = 0; i < 4; i++){ v += a * noise(p); p = m * p; a *= 0.5; }
+      return v;
+    }
+    float height(vec2 p){
+      p.x += uFlow;
+      vec2 q = vec2(fbm(p + vec2(0.0, uTime * 0.03)),
+                    fbm(p + vec2(5.2, 1.3) - vec2(0.0, uTime * 0.025)));
+      return fbm(p + 1.6 * q + vec2(uFlow * 0.35, 0.0));
+    }
+
+    // 雙色金屬反射帶
+    vec3 metal(float env){
+      float b = smoothstep(0.15, 0.85, 0.5 + 0.5 * sin(env * 6.2831853));
+      return mix(uA, uB, b);
+    }
+
+    vec3 shade(vec3 n, float h, vec2 p, float phase, float specPow, float specAmt){
+      vec3 r = reflect(vec3(0.0, 0.0, -1.0), n);
+      vec3 base = metal(r.x * 0.22 + r.y * 0.3 + h * 0.55 + phase);
+      float m = min(uRes.x, uRes.y);
+      vec2 mp = (uMouse - 0.5) * vec2(uRes.x / m, -uRes.y / m) * 0.85;
+      vec3 L = normalize(vec3(mp - p, 1.6));
+      float diff = max(dot(n, L), 0.0);
+      float spec = pow(max(dot(reflect(-L, n), vec3(0.0, 0.0, 1.0)), 0.0), specPow);
+      float rim  = pow(1.0 - n.z, 2.0);
+      vec3 col = base * (0.42 + 0.78 * diff);
+      col += mix(vec3(1.0), base, 0.25) * spec * specAmt;
+      col += mix(uA, uB, 0.5) * rim * 0.3;
+      return col;
+    }
+
+    void main(){
+      float m = min(uRes.x, uRes.y);
+      vec2 sp = (gl_FragCoord.xy - 0.5 * uRes) / m;
+      vec2 p = sp * 0.85;
+
+      float e = 0.01;
+      float h  = height(p);
+      float hx = height(p + vec2(e, 0.0));
+      float hy = height(p + vec2(0.0, e));
+      vec3 n = normalize(vec3(-(hx - h) / e, -(hy - h) / e, 0.9));
+      vec3 col = shade(n, h, p, 0.0, 48.0, 0.9);
+
+      col *= 1.0 - 0.3 * smoothstep(0.6, 1.6, length(sp));
+      gl_FragColor = vec4(col, 1.0);
+    }`;
+
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(s)); return null; }
+    return s;
+  }
+  const vs = compile(gl.VERTEX_SHADER, vert), fs = compile(gl.FRAGMENT_SHADER, frag);
+  if (!vs || !fs) return;
+  const prog = gl.createProgram();
+  gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.error(gl.getProgramInfoLog(prog)); return; }
+  gl.useProgram(prog);
+
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, 'p');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+  const U = {};
+  ['uRes', 'uTime', 'uFlow', 'uMouse', 'uA', 'uB'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+
+  /* 解析度：限制 DPR，並依實際幀率自動調整 */
+  const isMobile = matchMedia('(pointer: coarse)').matches || innerWidth < 768;
+  const maxScale = Math.min(window.devicePixelRatio || 1, isMobile ? 1.0 : 1.25);
+  let scale = maxScale;
+  function resize() {
+    const w = Math.max(1, Math.round(innerWidth * scale));
+    const h = Math.max(1, Math.round(innerHeight * scale));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w; canvas.height = h;
+      gl.viewport(0, 0, w, h);
+    }
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  /* ---------- 隨機雙色液態金屬 ---------- */
+  // 全部為金屬調：亮部偏冷白、暗部飽和，搭配 shader 的高光與邊緣反射
+  const METALS = [
+    [0.75, 0.77, 0.80],  // 銀
+    [0.035, 0.038, 0.045], // 黑鉻
+    [0.95, 0.95, 0.97],  // 珍珠白
+    [0.16, 0.62, 0.70],  // 湖水藍
+    [0.98, 0.55, 0.55],  // 水蜜桃紅
+    [0.88, 0.68, 0.26],  // 金
+    [0.85, 0.55, 0.47],  // 玫瑰金
+    [0.72, 0.38, 0.20],  // 紅銅
+    [0.45, 0.32, 0.18],  // 古銅
+    [0.92, 0.84, 0.66],  // 香檳金
+    [0.24, 0.26, 0.30],  // 鎗灰
+    [0.22, 0.35, 0.78],  // 鈦藍
+    [0.48, 0.28, 0.70],  // 陽極紫
+    [0.10, 0.48, 0.38],  // 祖母綠
+    [0.62, 0.08, 0.12]   // 金屬紅
+  ];
+  const lum = c => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  // 隨機挑兩種不同、明暗有差距的金屬色；盡量不和上一組重複
+  function randomPair(prev) {
+    for (let tries = 0; tries < 40; tries++) {
+      const a = METALS[Math.floor(Math.random() * METALS.length)];
+      const b = METALS[Math.floor(Math.random() * METALS.length)];
+      if (a === b || Math.abs(lum(a) - lum(b)) < 0.15) continue;
+      if (prev && (prev.includes(a) || prev.includes(b)) && tries < 30) continue;
+      return [a, b];
+    }
+    return [METALS[0], METALS[1]];
+  }
+  const HOLD = 3.0, FADE = 1.2, PERIOD = HOLD + FADE;
+  const lerp3 = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+  let curPair = [METALS[0], METALS[1]];   // 開場：銀 + 黑鉻
+  let nextPair = randomPair(curPair);
+  let stage = 0;
+
+  /* 滑鼠 / 觸控互動 */
+  const target = { x: 0.7, y: 0.3 }, cur = { x: 0.7, y: 0.3 };
+  let moving = 0;                    // 1 = 滑鼠正在移動，停下後漸漸歸 0
+  function setPointer(x, y) { target.x = x / innerWidth; target.y = y / innerHeight; moving = 1; }
+  window.addEventListener('pointermove', e => setPointer(e.clientX, e.clientY), { passive: true });
+  window.addEventListener('touchmove', e => { const t = e.touches[0]; if (t) setPointer(t.clientX, t.clientY); }, { passive: true });
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const speed = reduced ? 0.25 : 1.0;
+
+  let running = true, last = performance.now(), t = 0, flow = 0, clock = 0;
+  let frames = 0, acc = 0;
+  document.addEventListener('visibilitychange', () => {
+    running = !document.hidden;
+    if (running) { last = performance.now(); requestAnimationFrame(loop); }
+  });
+
+  function loop(now) {
+    if (!running) return;
+    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
+    last = now;
+    t += dt * speed;
+
+    const k = 1 - Math.pow(0.04, dt);
+    cur.x += (target.x - cur.x) * k;
+    cur.y += (target.y - cur.y) * k;
+
+    // 滑鼠移動時：流動速度與換色速度都 ×1.2
+    moving *= Math.pow(0.02, dt);
+    const mult = 1 + 0.2 * Math.min(1, moving);
+    flow  += dt * speed * 0.08 * mult;
+    clock += dt * mult;
+
+    const st = Math.floor(clock / PERIOD);
+    if (st !== stage) { stage = st; curPair = nextPair; nextPair = randomPair(curPair); }
+    const local = clock - st * PERIOD;
+    let f = local < HOLD ? 0 : (local - HOLD) / FADE;
+    f = f * f * (3 - 2 * f);
+    const A = lerp3(curPair[0], nextPair[0], f), B = lerp3(curPair[1], nextPair[1], f);
+
+    gl.uniform2f(U.uRes, canvas.width, canvas.height);
+    gl.uniform1f(U.uTime, t);
+    gl.uniform1f(U.uFlow, flow);
+    gl.uniform2f(U.uMouse, cur.x, cur.y);
+    gl.uniform3fv(U.uA, A);
+    gl.uniform3fv(U.uB, B);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    acc += dt; frames++;
+    if (frames >= 60) {
+      const avg = acc / frames;
+      if (avg > 1 / 45 && scale > 0.5) { scale = Math.max(0.5, scale * 0.85); resize(); }
+      else if (avg < 1 / 58 && scale < maxScale) { scale = Math.min(maxScale, scale * 1.05); resize(); }
+      frames = 0; acc = 0;
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
