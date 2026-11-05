@@ -97,33 +97,127 @@
     font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.7;
   }
 
-  /* 內容面板 */
-  .panel {
-    position: fixed; z-index: 3;
-    top: 0; right: 0; bottom: 0;
-    width: min(460px, 100%);
-    padding: calc(var(--gutter) + env(safe-area-inset-top)) var(--gutter) var(--gutter);
-    background: rgba(36, 14, 44, 0.62);
-    -webkit-backdrop-filter: blur(18px);
-    backdrop-filter: blur(18px);
-    border-left: 1px solid rgba(255, 246, 236, 0.12);
-    transform: translateX(105%);
-    transition: transform 0.6s cubic-bezier(.7, 0, .2, 1);
-    overflow-y: auto;
-  }
-  .panel.open { transform: translateX(0); }
-  .panel h2 { font-weight: 200; font-size: clamp(28px, 3vw, 40px); letter-spacing: 0.04em; margin-bottom: 18px; }
-  .panel p { color: var(--ink-soft); line-height: 1.8; font-size: 15px; }
-  .panel .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
-  .panel .grid div {
-    aspect-ratio: 1; border-radius: 4px;
-    background: linear-gradient(135deg, rgba(255,178,122,.35), rgba(162,64,127,.35));
-    border: 1px solid rgba(255,246,236,.12);
-  }
   .close {
     position: absolute; top: calc(var(--gutter) + env(safe-area-inset-top) - 6px); right: var(--gutter);
     background: none; border: 0; color: var(--ink); cursor: pointer;
     font: inherit; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; padding: 6px 0;
+  }
+
+  /* ---------- Dynamic Artwork：背景本身就是作品 ---------- */
+  .ui, .scrim { transition: opacity 0.6s ease, visibility 0.6s; }
+  .scrim-g {
+    opacity: 0;
+    background:
+      radial-gradient(ellipse 60% 55% at 0% 100%, rgba(4, 6, 14, 0.55), rgba(4, 6, 14, 0) 100%),
+      radial-gradient(ellipse 35% 45% at 100% 100%, rgba(4, 6, 14, 0.45), rgba(4, 6, 14, 0) 100%),
+      linear-gradient(0deg, rgba(4, 6, 14, 0.72) 0%, rgba(4, 6, 14, 0.28) 30%, rgba(4, 6, 14, 0) 52%),
+      linear-gradient(180deg, rgba(4, 6, 14, 0.45) 0%, rgba(4, 6, 14, 0) 16%);
+  }
+  body.in-gallery .ui { opacity: 0; visibility: hidden; }
+  body.in-gallery .scrim:not(.scrim-g) { opacity: 0; }
+  body.in-gallery .scrim-g { opacity: 1; }
+  .fader {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: #000; opacity: 0; transition: opacity 0.38s ease;
+  }
+  .fader.on { opacity: 1; }
+  .gallery {
+    position: fixed; inset: 0; z-index: 3; pointer-events: none;
+    opacity: 0; visibility: hidden; transition: opacity 0.6s ease, visibility 0.6s;
+    text-shadow: 0 1px 12px rgba(4, 6, 14, 0.6);
+  }
+  .gallery.open { opacity: 1; visibility: visible; }
+  .gallery a, .gallery button { pointer-events: auto; }
+  .g-brand {
+    position: absolute; top: calc(var(--gutter) + env(safe-area-inset-top) - 6px); left: var(--gutter);
+    padding: 6px 0; color: var(--ink); text-decoration: none;
+    font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase;
+  }
+  .g-brand sup { font-size: 0.7em; margin-left: 1px; }
+  .g-top {
+    position: absolute; top: calc(var(--gutter) + env(safe-area-inset-top) - 6px); right: var(--gutter);
+    display: flex; align-items: center; gap: 28px; transition: opacity 0.4s ease;
+  }
+  .g-top .close { position: static; }
+  .g-toggle {
+    background: none; border: 0; color: var(--ink); cursor: pointer; opacity: 0.75;
+    font: inherit; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; padding: 6px 0;
+  }
+  .g-toggle:hover { opacity: 1; }
+  .g-toggle:focus { outline: none; }
+  .g-toggle:focus-visible { outline: 1px solid rgba(255, 246, 236, 0.45); outline-offset: 6px; }
+  /* 隱藏資訊：只留右上角兩顆按鈕，滑過才變清楚 */
+  .g-brand, .g-nav { transition: opacity 0.4s ease, visibility 0.4s; }
+  .gallery.bare .g-info, .gallery.bare .g-nav, .gallery.bare .g-brand { opacity: 0; visibility: hidden; }
+  .gallery.bare .g-top { opacity: 0.45; }
+  .gallery.bare .g-top:hover, .gallery.bare .g-top:focus-within { opacity: 1; }
+  body.bare-ui .scrim-g { opacity: 0; }
+  .g-info {
+    position: absolute; left: var(--gutter); bottom: calc(var(--gutter) + env(safe-area-inset-bottom));
+    max-width: min(440px, 52vw);
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+  }
+  .g-info.swap { opacity: 0; transform: translateY(6px); }
+  .g-count, .g-meta { font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink-soft); }
+  .g-title { font-weight: 200; font-size: clamp(44px, 6vw, 88px); line-height: 1; letter-spacing: 0.06em; margin-top: 14px; }
+  .g-en {
+    display: block; margin-top: 12px; font-weight: 300;
+    font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  .g-meta { margin-top: 18px; }
+  .g-text { margin-top: 10px; font-size: 15px; line-height: 1.85; color: var(--ink-soft); text-wrap: balance; }
+  .g-hint {
+    display: inline-flex; align-items: center; gap: 10px; margin-top: 18px; padding: 7px 14px;
+    border: 1px solid rgba(255, 246, 236, 0.22); border-radius: 999px;
+    font-size: 12px; letter-spacing: 0.08em;
+    background: rgba(4, 6, 14, 0.25);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .g-hint::before {
+    content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 10px var(--accent);
+    animation: g-pulse 2s ease-in-out infinite;
+  }
+  @keyframes g-pulse { 50% { opacity: 0.3; } }
+  .g-nav {
+    position: absolute; right: var(--gutter); bottom: calc(var(--gutter) + env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; align-items: flex-end; gap: 18px;
+  }
+  .g-list { list-style: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .g-list button {
+    background: none; border: 0; cursor: pointer; font: inherit; color: var(--ink-soft);
+    display: flex; align-items: baseline; gap: 14px; padding: 5px 0;
+    font-size: 15px; letter-spacing: 0.12em; transition: color 0.3s;
+  }
+  .g-list .n { font-size: 11px; letter-spacing: 0.2em; opacity: 0.75; }
+  .g-list .t { position: relative; }
+  .g-list .t em { font-style: normal; font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; margin-left: 10px; opacity: 0.7; }
+  .g-list .t::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 1px; background: currentColor;
+    transform: scaleX(0); transform-origin: right center; transition: transform 0.45s cubic-bezier(.7, 0, .2, 1);
+  }
+  .g-list button:hover, .g-list button[aria-current="true"] { color: var(--ink); }
+  .g-list button:hover .t::after, .g-list button[aria-current="true"] .t::after { transform: scaleX(1); transform-origin: left center; }
+  .g-arrows { display: flex; gap: 10px; }
+  .g-arrows button {
+    width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
+    border: 1px solid rgba(255, 246, 236, 0.3); background: rgba(4, 6, 14, 0.2); color: var(--ink);
+    font: inherit; font-size: 16px;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .g-arrows button:hover { background: rgba(255, 246, 236, 0.14); border-color: rgba(255, 246, 236, 0.6); }
+  .g-list button:focus { outline: none; }
+  .g-list button:focus-visible, .g-arrows button:focus-visible, .g-brand:focus-visible { outline: 1px solid rgba(255, 246, 236, 0.45); outline-offset: 4px; }
+  @media (max-width: 640px) {
+    .g-info { max-width: none; right: var(--gutter); bottom: calc(var(--gutter) + env(safe-area-inset-bottom) + 64px); }
+    .g-title { font-size: 44px; }
+    .g-text { font-size: 13.5px; line-height: 1.75; }
+    .g-nav { left: var(--gutter); flex-direction: row; justify-content: space-between; align-items: center; }
+    .g-list { flex-direction: row; gap: 18px; }
+    .g-list .t { display: none; }
+    .g-list .n { font-size: 13px; opacity: 1; padding-bottom: 3px; border-bottom: 1px solid transparent; }
+    .g-list button[aria-current="true"] .n { border-bottom-color: currentColor; }
   }
 
   /* ---------- About Me 全螢幕頁 ---------- */
@@ -307,14 +401,16 @@
     .intro { max-width: 100%; }
   }
   @media (prefers-reduced-motion: reduce) {
-    nav a::after, .panel, .about, .about [data-reveal], .ulink::after { transition: none; }
-    .hua, .about.open .collage .stk { animation: none; }
+    nav a::after, .gallery, .g-info, .fader, .g-list .t::after, .about, .about [data-reveal], .ulink::after { transition: none; }
+    .hua, .about.open .collage .stk, .g-hint::before { animation: none; }
   }
 </style>
 </head>
 <body>
 <canvas id="bg" aria-hidden="true"></canvas>
 <div class="scrim"></div>
+<div class="scrim scrim-g"></div>
+<div class="fader" id="fader"></div>
 
 <main class="ui">
   <header>
@@ -329,12 +425,27 @@
   <p class="intro">TZU HUA WANG<sup>®</sup> All Rights Reserved · Since 2026</p>
 </main>
 
-<aside class="panel" id="panel" aria-hidden="true">
-  <button class="close" id="close" type="button">Close ✕</button>
-  <h2 id="panel-title"></h2>
-  <p id="panel-text"></p>
-  <div class="grid" id="panel-grid"></div>
-</aside>
+<section class="gallery" id="gallery" aria-label="Dynamic Artwork" aria-hidden="true">
+  <a class="g-brand" href="#" data-close>TZU HUA WANG XART<sup>®</sup></a>
+  <div class="g-top">
+    <button class="g-toggle" id="g-toggle" type="button" aria-pressed="false">Hide Info</button>
+    <button class="close" id="g-close" type="button" data-close>Close ✕</button>
+  </div>
+  <div class="g-info" id="g-info" aria-live="polite">
+    <p class="g-count"><span id="g-no">01</span> / <span id="g-total">04</span> · Dynamic Artwork</p>
+    <h2 class="g-title"><span id="g-title"></span><span class="g-en" id="g-en"></span></h2>
+    <p class="g-meta" id="g-meta"></p>
+    <p class="g-text" id="g-text"></p>
+    <p class="g-hint" id="g-hint"></p>
+  </div>
+  <div class="g-nav">
+    <ol class="g-list" id="g-list" aria-label="作品列表"></ol>
+    <div class="g-arrows">
+      <button type="button" id="g-prev" aria-label="上一件作品">←</button>
+      <button type="button" id="g-next" aria-label="下一件作品">→</button>
+    </div>
+  </div>
+</section>
 
 <section class="about" id="about-page" role="dialog" aria-modal="true" aria-labelledby="about-title" aria-hidden="true">
   <div class="about-inner">
@@ -400,15 +511,34 @@
 
 <script>
 (() => {
-  /* ---------- 內容面板 ---------- */
-  const CONTENT = {
-    dynamic: ["Dynamic Artwork", "即時運算的動態作品與影像裝置，讓畫面隨時間與觀者變化。", 4]
-  };
-  const panel = document.getElementById('panel');
+  /* ---------- Dynamic Artwork：作品資料 ---------- */
+  const WORKS = [
+    { slug: 'liquid-metal', title: '液態金屬', en: 'Liquid Metal', meta: '2026 · WebGL · Real-time shader',
+      text: '一片不會停止流動的鏡面。時間可以往前推，也可以往回拉；你停下來的地方，液面就為你凹陷。',
+      hint: '左右移動 加速／倒帶 · 停在液面 壓出凹洞', touch: '左右拖曳 加速／倒帶 · 按住液面 壓出凹洞' },
+    { slug: 'gravity', title: '引力', en: 'Gravity', meta: '2026 · WebGL · Metaballs',
+      text: '幾滴水銀在黑暗裡漂浮，彼此吸引、融合又分開。你靠近它們，它們就靠近你。',
+      hint: '移動 牽引水銀 · 點擊 落下新的一滴', touch: '拖曳 牽引水銀 · 點一下 落下新的一滴' },
+    { slug: 'ripple', title: '漣漪', en: 'Ripple', meta: '2026 · WebGL · Wave interference',
+      text: '每一次經過都會留下痕跡。波紋擴散、交疊，再慢慢歸於平靜。',
+      hint: '滑過水面 留下波紋 · 點擊 投下一滴', touch: '滑過水面 留下波紋 · 點一下 投下一滴' },
+    { slug: 'kaleidoscope', title: '萬花', en: 'Kaleidoscope', meta: '2026 · WebGL · Mirror symmetry',
+      text: '把一小塊流動的顏色放進鏡子之間，世界就被複製成無限的對稱。這是這個網站最初的樣子。',
+      hint: '左右 增減鏡面 · 上下 縮放 · 拖曳 旋轉 · 點擊 換色', touch: '拖曳 改變鏡面與縮放 · 點一下 換色' }
+  ];
+  const coarse = matchMedia('(pointer: coarse)').matches;
+  const art = { select: () => {} };   // WebGL 初始化後接上
+
   const links = document.querySelectorAll('nav a');
   const about = document.getElementById('about-page');
   const aboutClose = document.getElementById('about-close');
-  let lastFocus = null;
+  const gallery = document.getElementById('gallery');
+  const gInfo = document.getElementById('g-info');
+  const gList = document.getElementById('g-list');
+  const gClose = document.getElementById('g-close');
+  const $ = id => document.getElementById(id);
+  let lastFocus = null, gIndex = 0, swapT = 0;
+
   // 通知背景：全螢幕頁開著時背景被模糊，可降低解析度省效能
   const overlayChanged = on => window.dispatchEvent(new CustomEvent('overlaychange', { detail: on }));
   function openAbout() {
@@ -425,312 +555,701 @@
     overlayChanged(false);
     if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
   }
-  function closeSide() { panel.classList.remove('open'); panel.setAttribute('aria-hidden', 'true'); }
-  function openPanel(key) {
-    if (key === 'about') {
-      closeSide(); openAbout();
-      links.forEach(a => a.setAttribute('aria-current', a.dataset.panel === key));
-      return;
+
+  /* ---------- 畫廊 ---------- */
+  $('g-total').textContent = String(WORKS.length).padStart(2, '0');
+  WORKS.forEach((w, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<button type="button" data-i="${i}"><span class="n">${String(i + 1).padStart(2, '0')}</span>` +
+                   `<span class="t">${w.title}<em>${w.en}</em></span></button>`;
+    gList.appendChild(li);
+  });
+  const gButtons = gList.querySelectorAll('button');
+  gList.addEventListener('click', e => { const b = e.target.closest('button'); if (b) showWork(+b.dataset.i); });
+  $('g-prev').addEventListener('click', () => showWork(gIndex - 1));
+  $('g-next').addEventListener('click', () => showWork(gIndex + 1));
+  gallery.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', e => { e.preventDefault(); closePanel(); }));
+
+  function renderInfo(i) {
+    const w = WORKS[i];
+    $('g-no').textContent = String(i + 1).padStart(2, '0');
+    $('g-title').textContent = w.title;
+    $('g-en').textContent = w.en;
+    $('g-meta').textContent = w.meta;
+    $('g-text').textContent = w.text;
+    $('g-hint').textContent = coarse ? w.touch : w.hint;
+    gButtons.forEach((b, k) => b.setAttribute('aria-current', k === i));
+  }
+  function showWork(i, instant) {
+    i = (i + WORKS.length) % WORKS.length;
+    const changed = i !== gIndex;
+    gIndex = i;
+    clearTimeout(swapT);
+    if (changed && !instant) {
+      gInfo.classList.add('swap');
+      swapT = setTimeout(() => { renderInfo(i); gInfo.classList.remove('swap'); }, 250);
+    } else { renderInfo(i); gInfo.classList.remove('swap'); }
+    art.select(i);
+    history.replaceState(null, '', '#dynamic/' + WORKS[i].slug);
+  }
+  function openGallery(slug) {
+    const found = WORKS.findIndex(w => w.slug === slug);
+    const wasOpen = gallery.classList.contains('open');
+    if (!wasOpen) {
+      lastFocus = document.activeElement;
+      gallery.classList.add('open'); gallery.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('in-gallery');
+      setTimeout(() => gClose.focus({ preventScroll: true }), 60);
     }
-    const c = CONTENT[key]; if (!c) return closePanel();
-    closeAbout();
-    document.getElementById('panel-title').textContent = c[0];
-    document.getElementById('panel-text').textContent = c[1];
-    document.getElementById('panel-grid').innerHTML = '<div></div>'.repeat(c[2]);
-    links.forEach(a => a.setAttribute('aria-current', a.dataset.panel === key));
-    panel.classList.add('open'); panel.setAttribute('aria-hidden', 'false');
+    showWork(found >= 0 ? found : (wasOpen ? gIndex : 0), !wasOpen);
+  }
+  const gToggle = $('g-toggle');
+  function setBare(on) {
+    gallery.classList.toggle('bare', on);
+    document.body.classList.toggle('bare-ui', on);
+    gToggle.textContent = on ? 'Show Info' : 'Hide Info';
+    gToggle.setAttribute('aria-pressed', on);
+  }
+  gToggle.addEventListener('click', () => setBare(!gallery.classList.contains('bare')));
+  function closeGallery() {
+    if (!gallery.classList.contains('open')) return;
+    setBare(false);
+    gallery.classList.remove('open'); gallery.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('in-gallery');
+    art.select(0);   // 回到首頁的液態金屬
+    if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
+  }
+
+  /* ---------- 路由 ---------- */
+  function openPanel(key) {
+    if (key === 'about') { closeGallery(); openAbout(); }
+    else if (key === 'dynamic' || key.indexOf('dynamic/') === 0) { closeAbout(); openGallery(key.split('/')[1]); }
+    else return closePanel();
+    links.forEach(a => a.setAttribute('aria-current', a.dataset.panel === key.split('/')[0]));
   }
   function closePanel() {
-    closeSide(); closeAbout();
+    closeGallery(); closeAbout();
     links.forEach(a => a.setAttribute('aria-current', 'false'));
     if (location.hash) history.replaceState(null, '', location.pathname);
   }
   window.addEventListener('hashchange', () => openPanel(location.hash.slice(1)));
-  document.getElementById('close').addEventListener('click', closePanel);
   aboutClose.addEventListener('click', closePanel);
-  window.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
-  if (location.hash) openPanel(location.hash.slice(1));
-
-  /* ---------- WebGL 液態金屬背景 ---------- */
-  const canvas = document.getElementById('bg');
-  const gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'high-performance' });
-  if (!gl) return; // 不支援時保留 CSS 漸層背景
-
-  const vert = `
-    attribute vec2 p;
-    void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
-
-  const frag = `
-    #ifdef GL_FRAGMENT_PRECISION_HIGH
-    precision highp float;     // 高精度：避免手機上長時間播放後出現格狀、色階斷層
-    #else
-    precision mediump float;
-    #endif
-    uniform vec2  uRes;
-    uniform float uTime;
-    uniform float uFlow;      // 累積流動距離（右→左）
-    uniform vec2  uMouse;     // 滑鼠位置 0..1
-    uniform vec3  uA;         // 目前雙色組合：顏色 A
-    uniform vec3  uB;         // 目前雙色組合：顏色 B
-    uniform vec3  uDent;      // 滑鼠凹洞：xy = 位置，z = 強度 0..1
-
-    // 不用 sin 的雜湊，數值變大時依然穩定、不會出現雜訊顆粒
-    float hash(vec2 p){
-      vec3 p3 = fract(vec3(p.xyx) * 0.1031);
-      p3 += dot(p3, p3.yzx + 33.33);
-      return fract((p3.x + p3.y) * p3.z);
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closePanel();
+    else if (gallery.classList.contains('open') && (e.key === 'i' || e.key === 'I') && !e.metaKey && !e.ctrlKey) {
+      setBare(!gallery.classList.contains('bare'));
     }
-    float noise(vec2 p){
-      vec2 i = floor(p), f = fract(p);
-      vec2 u = f * f * (3.0 - 2.0 * f);
-      return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
-                 mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+    else if (gallery.classList.contains('open') && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+      showWork(gIndex + (e.key === 'ArrowRight' ? 1 : -1));
     }
-    float fbm(vec2 p){
-      float v = 0.0, a = 0.5;
-      mat2 m = mat2(1.6, 1.2, -1.2, 1.6);
-      for (int i = 0; i < 4; i++){ v += a * noise(p); p = m * p; a *= 0.5; }
-      return v;
-    }
-    // 滑鼠位置的液體凹洞：中央下陷，外圈微微隆起
-    float dent(vec2 p){
-      vec2 d = p - uDent.xy;
-      float r = length(d);
-      const float R = 0.075;
-      float hole = exp(-(r * r) / (R * R));
-      float k = r - R * 1.7;
-      float rim  = exp(-(k * k) / (R * R * 0.35));
-      return uDent.z * (-0.11 * hole + 0.025 * rim);
-    }
-    float height(vec2 p){
-      float dn = dent(p);
-      p.x += uFlow;
-      vec2 q = vec2(fbm(p + vec2(0.0, uTime * 0.03)),
-                    fbm(p + vec2(5.2, 1.3) - vec2(0.0, uTime * 0.025)));
-      return fbm(p + 1.6 * q + vec2(uFlow * 0.35, 0.0)) + dn;
-    }
-
-    // 雙色金屬反射帶
-    vec3 metal(float env){
-      float b = smoothstep(0.25, 0.75, 0.5 + 0.5 * sin(env * 6.2831853));   // 色帶邊緣更俐落
-      return mix(uA, uB, b);
-    }
-
-    vec3 shade(vec3 n, float h, vec2 p, float phase, float specPow, float specAmt){
-      vec3 r = reflect(vec3(0.0, 0.0, -1.0), n);
-      vec3 base = metal(r.x * 0.22 + r.y * 0.3 + h * 0.55 + phase);
-      float m = min(uRes.x, uRes.y);
-      vec2 mp = (uMouse - 0.5) * vec2(uRes.x / m, -uRes.y / m) * 0.85;
-      vec3 L = normalize(vec3(mp - p, 1.6));
-      float diff = max(dot(n, L), 0.0);
-      float spec = pow(max(dot(reflect(-L, n), vec3(0.0, 0.0, 1.0)), 0.0), specPow);
-      float rim  = pow(1.0 - n.z, 2.0);
-      vec3 col = base * (0.42 + 0.78 * diff);
-      col += mix(vec3(1.0), base, 0.25) * spec * specAmt;
-      col += mix(uA, uB, 0.5) * rim * 0.3;
-      return col;
-    }
-
-    void main(){
-      float m = min(uRes.x, uRes.y);
-      vec2 sp = (gl_FragCoord.xy - 0.5 * uRes) / m;
-      vec2 p = sp * 0.85;
-
-      float e = 0.01;
-      float h  = height(p);
-      float hx = height(p + vec2(e, 0.0));
-      float hy = height(p + vec2(0.0, e));
-      vec3 n = normalize(vec3(-(hx - h) / e, -(hy - h) / e, 0.9));
-      vec3 col = shade(n, h, p, 0.0, 80.0, 1.1);   // 高光更集中、更亮
-
-      col *= 1.0 - 0.3 * smoothstep(0.6, 1.6, length(sp));
-      // 微量抖色，消除平滑漸層上的色階帶
-      col += (hash(gl_FragCoord.xy + fract(uTime * 7.0) * 113.0) - 0.5) / 255.0;
-      gl_FragColor = vec4(col, 1.0);
-    }`;
-
-  function compile(type, src) {
-    const s = gl.createShader(type);
-    gl.shaderSource(s, src); gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(s)); return null; }
-    return s;
-  }
-  const vs = compile(gl.VERTEX_SHADER, vert), fs = compile(gl.FRAGMENT_SHADER, frag);
-  if (!vs || !fs) return;
-  const prog = gl.createProgram();
-  gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.error(gl.getProgramInfoLog(prog)); return; }
-  gl.useProgram(prog);
-
-  const buf = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-  const loc = gl.getAttribLocation(prog, 'p');
-  gl.enableVertexAttribArray(loc);
-  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-
-  const U = {};
-  ['uRes', 'uTime', 'uFlow', 'uMouse', 'uA', 'uB', 'uDent'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
-
-  /* 解析度：限制 DPR，並依實際幀率自動調整 */
-  const isMobile = matchMedia('(pointer: coarse)').matches || innerWidth < 768;
-  // 以螢幕實際像素密度繪製（Retina 最高 2x），避免被瀏覽器放大而模糊
-  const maxScale = Math.min(window.devicePixelRatio || 1, 2);
-  let scale = isMobile ? Math.min(maxScale, 1.5) : maxScale;   // 手機先保守起步，順暢再往上提
-  let overlayOpen = document.getElementById('about-page').classList.contains('open');
-  window.addEventListener('overlaychange', e => { overlayOpen = e.detail; resize(); });
-  function resize() {
-    const s = overlayOpen ? Math.min(scale, 0.6) : scale;   // 被模糊時不需要高畫質
-    const w = Math.max(1, Math.round(innerWidth * s));
-    const h = Math.max(1, Math.round(innerHeight * s));
-    if (canvas.width !== w || canvas.height !== h) {
-      canvas.width = w; canvas.height = h;
-      gl.viewport(0, 0, w, h);
-    }
-  }
-  window.addEventListener('resize', resize);
-  resize();
-
-  /* ---------- 隨機雙色液態金屬 ---------- */
-  // 全部為金屬調：亮部偏冷白、暗部飽和，搭配 shader 的高光與邊緣反射
-  const METALS = [
-    [0.75, 0.77, 0.80],  // 銀
-    [0.035, 0.038, 0.045], // 黑鉻
-    [0.95, 0.95, 0.97],  // 珍珠白
-    [0.16, 0.62, 0.70],  // 湖水藍
-    [0.98, 0.55, 0.55],  // 水蜜桃紅
-    [0.88, 0.68, 0.26],  // 金
-    [0.85, 0.55, 0.47],  // 玫瑰金
-    [0.72, 0.38, 0.20],  // 紅銅
-    [0.45, 0.32, 0.18],  // 古銅
-    [0.92, 0.84, 0.66],  // 香檳金
-    [0.24, 0.26, 0.30],  // 鎗灰
-    [0.22, 0.35, 0.78],  // 鈦藍
-    [0.48, 0.28, 0.70],  // 陽極紫
-    [0.10, 0.48, 0.38],  // 祖母綠
-    [0.62, 0.08, 0.12]   // 金屬紅
-  ];
-  const lum = c => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
-  // 隨機挑兩種不同、明暗有差距的金屬色；盡量不和上一組重複
-  function randomPair(prev) {
-    for (let tries = 0; tries < 40; tries++) {
-      const a = METALS[Math.floor(Math.random() * METALS.length)];
-      const b = METALS[Math.floor(Math.random() * METALS.length)];
-      if (a === b || Math.abs(lum(a) - lum(b)) < 0.15) continue;
-      if (prev && (prev.includes(a) || prev.includes(b)) && tries < 30) continue;
-      return [a, b];
-    }
-    return [METALS[0], METALS[1]];
-  }
-  const HOLD = 3.0, FADE = 1.2, PERIOD = HOLD + FADE;
-  const lerp3 = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
-  // 每個階段的配色都記下來，倒帶時才能回到「剛剛」的顏色
-  const history = new Map([[0, [METALS[0], METALS[1]]]]);   // 開場：銀 + 黑鉻
-  function pairAt(i) {
-    if (!history.has(i)) history.set(i, randomPair(history.get(i - 1) || history.get(i + 1)));
-    return history.get(i);
-  }
-
-  /* 滑鼠 / 觸控互動 */
-  const target = { x: 0.7, y: 0.3 }, cur = { x: 0.7, y: 0.3 };
-  // drive：往右移為正（加速），往左移為負（倒帶），不動時慢慢回到 0（正常）
-  let drive = 0, lastX = null;
-  function setPointer(x, y) {
-    const nx = x / innerWidth;
-    if (lastX !== null) drive = Math.max(-1, Math.min(1, drive + (nx - lastX) * 8));
-    lastX = nx;
-    target.x = nx; target.y = y / innerHeight;
-  }
-  // 凹洞：游標在液體上就出現（指到連結或面板時收起），離開視窗或放開手指就消失
-  const dentPos = { x: 0, y: 0 }, dentTarget = { x: 0, y: 0 };
-  let dentOn = 0, dentS = 0;
-  function setDent(x, y, on) {
-    const m = Math.min(innerWidth, innerHeight);
-    dentTarget.x = (x / innerWidth - 0.5) * (innerWidth / m) * 0.85;
-    dentTarget.y = -(y / innerHeight - 0.5) * (innerHeight / m) * 0.85;
-    if (dentS < 0.01) { dentPos.x = dentTarget.x; dentPos.y = dentTarget.y; }
-    dentOn = on;
-  }
-  const overUI = el => !!(el && el.closest && el.closest('a, button, .panel, .about.open'));
-  window.addEventListener('pointermove', e => {
-    if (e.pointerType === 'touch') return;
-    setPointer(e.clientX, e.clientY);
-    setDent(e.clientX, e.clientY, overUI(e.target) ? 0 : 1);
-  }, { passive: true });
-  window.addEventListener('touchstart', e => {
-    const t = e.touches[0]; if (!t) return;
-    lastX = t.clientX / innerWidth;
-    setDent(t.clientX, t.clientY, overUI(e.target) ? 0 : 1);
-  }, { passive: true });
-  window.addEventListener('touchmove', e => {
-    const t = e.touches[0]; if (!t) return;
-    setPointer(t.clientX, t.clientY);
-    setDent(t.clientX, t.clientY, overUI(e.target) ? 0 : 1);
-  }, { passive: true });
-  window.addEventListener('touchend', e => { if (!e.touches.length) { dentOn = 0; lastX = null; } }, { passive: true });
-  window.addEventListener('mouseout', e => { if (!e.relatedTarget) { dentOn = 0; lastX = null; } });
-  window.addEventListener('blur', () => { dentOn = 0; });
-
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const speed = reduced ? 0.25 : 1.0;
-
-  let running = true, last = performance.now(), t = 0, flow = 0, clock = 0, rate = 1;
-  let frames = 0, acc = 0;
-  document.addEventListener('visibilitychange', () => {
-    running = !document.hidden;
-    if (running) { last = performance.now(); requestAnimationFrame(loop); }
   });
 
-  function loop(now) {
-    if (!running) return;
-    const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
-    last = now;
+  initArt();
+  if (location.hash) openPanel(location.hash.slice(1));
 
-    // 時間倍率：右移最高 ×3.5 加速；左移最低 ×-2 倒帶；不動時回到 ×1
-    drive *= Math.pow(0.12, dt);
-    const targetRate = drive >= 0 ? 1 + 2.5 * drive : 1 + 3 * drive;
-    rate += (targetRate - rate) * (1 - Math.pow(0.002, dt));
-    t     += dt * speed * rate;         // 液面起伏
-    flow  += dt * speed * 0.08 * rate;  // 右→左流動（負值即倒流）
-    clock += dt * rate;                 // 換色時鐘（負值即倒回上一組顏色）
+  /* =====================================================================
+     WebGL：每件作品是一個 fragment shader，共用同一張全螢幕畫布
+     ===================================================================== */
+  function initArt() {
+    const canvas = document.getElementById('bg');
+    const fader = document.getElementById('fader');
+    const gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'high-performance' });
+    if (!gl) {   // 不支援時保留 CSS 漸層背景
+      WORKS.forEach(w => { w.hint = w.touch = '此瀏覽器不支援 WebGL，無法播放互動作品'; });
+      return;
+    }
 
-    const k = 1 - Math.pow(0.04, dt);
-    cur.x += (target.x - cur.x) * k;
-    cur.y += (target.y - cur.y) * k;
+    const VERT = `
+      attribute vec2 p;
+      void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
 
-    // 凹洞緊跟游標、柔和地出現與消失
-    const kd = 1 - Math.pow(0.0002, dt);
-    dentPos.x += (dentTarget.x - dentPos.x) * kd;
-    dentPos.y += (dentTarget.y - dentPos.y) * kd;
-    dentS += (dentOn - dentS) * (1 - Math.pow(0.004, dt));
+    // 共用：高精度、不用 sin 的雜湊、value noise、fbm
+    const HEAD = `
+      #ifdef GL_FRAGMENT_PRECISION_HIGH
+      precision highp float;     // 高精度：避免手機上長時間播放後出現格狀、色階斷層
+      #else
+      precision mediump float;
+      #endif
+      uniform vec2  uRes;
+      uniform float uTime;
+      uniform vec2  uMouse;     // 滑鼠位置 0..1（已平滑）
 
-    const st = Math.floor(clock / PERIOD);
-    const curPair = pairAt(st), nextPair = pairAt(st + 1);
-    const local = clock - st * PERIOD;
-    let f = local < HOLD ? 0 : (local - HOLD) / FADE;
-    f = f * f * (3 - 2 * f);
-    const A = lerp3(curPair[0], nextPair[0], f), B = lerp3(curPair[1], nextPair[1], f);
+      float hash(vec2 p){
+        vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+        p3 += dot(p3, p3.yzx + 33.33);
+        return fract((p3.x + p3.y) * p3.z);
+      }
+      float noise(vec2 p){
+        vec2 i = floor(p), f = fract(p);
+        vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
+                   mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+      }
+      float fbm(vec2 p){
+        float v = 0.0, a = 0.5;
+        mat2 m = mat2(1.6, 1.2, -1.2, 1.6);
+        for (int i = 0; i < 4; i++){ v += a * noise(p); p = m * p; a *= 0.5; }
+        return v;
+      }
+      vec2 mouseP(float m){ return (uMouse - 0.5) * vec2(uRes.x / m, -uRes.y / m); }
+      vec3 finish(vec3 col, vec2 sp){
+        col *= 1.0 - 0.3 * smoothstep(0.6, 1.6, length(sp));
+        // 微量抖色，消除平滑漸層上的色階帶
+        return col + (hash(gl_FragCoord.xy + fract(uTime * 7.0) * 113.0) - 0.5) / 255.0;
+      }
+    `;
 
-    gl.uniform2f(U.uRes, canvas.width, canvas.height);
-    gl.uniform1f(U.uTime, t);
-    gl.uniform1f(U.uFlow, flow);
-    gl.uniform2f(U.uMouse, cur.x, cur.y);
-    gl.uniform3fv(U.uA, A);
-    gl.uniform3fv(U.uB, B);
-    gl.uniform3f(U.uDent, dentPos.x, dentPos.y, dentS);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    function compile(type, src) {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src); gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(s)); return null; }
+      return s;
+    }
+    const vs = compile(gl.VERTEX_SHADER, VERT);
+    function build(w) {
+      const fs = compile(gl.FRAGMENT_SHADER, HEAD + w.src);
+      if (!vs || !fs) return false;
+      const prog = gl.createProgram();
+      gl.attachShader(prog, vs); gl.attachShader(prog, fs);
+      gl.bindAttribLocation(prog, 0, 'p');
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.error(gl.getProgramInfoLog(prog)); return false; }
+      w.prog = prog; w.U = {};
+      ['uRes', 'uTime', 'uMouse'].concat(w.names).forEach(n => w.U[n] = gl.getUniformLocation(prog, n));
+      return true;
+    }
 
-    acc += dt; frames++;
-    if (frames >= 60) {
-      const avg = acc / frames;
-      // 自適應畫質：掉幀才小幅降低，順暢時逐步回到最高畫質
-      if (avg > 1 / 48 && scale > 0.75) { scale = Math.max(0.75, scale * 0.9); resize(); }
-      else if (avg < 1 / 57 && scale < maxScale) { scale = Math.min(maxScale, scale * 1.08); resize(); }
-      frames = 0; acc = 0;
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+    /* 解析度：依螢幕像素密度繪製，並依實際幀率自動調整 */
+    const isMobile = coarse || innerWidth < 768;
+    const maxScale = Math.min(window.devicePixelRatio || 1, 2);   // Retina 最高 2x
+    let scale = isMobile ? Math.min(maxScale, 1.5) : maxScale;    // 手機先保守起步，順暢再往上提
+    let overlayOpen = about.classList.contains('open');
+    window.addEventListener('overlaychange', e => { overlayOpen = e.detail; resize(); });
+    function resize() {
+      const s = overlayOpen ? Math.min(scale, 0.6) : scale;   // 被模糊時不需要高畫質
+      const w = Math.max(1, Math.round(innerWidth * s));
+      const h = Math.max(1, Math.round(innerHeight * s));
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w; canvas.height = h;
+        gl.viewport(0, 0, w, h);
+      }
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const speed = reduced ? 0.25 : 1.0;
+    const ext = () => { const m = Math.min(innerWidth, innerHeight); return [innerWidth / m * 0.5, innerHeight / m * 0.5]; };
+
+    /* ---------- 共用指標狀態 ----------
+       P：以畫面短邊為 1 的座標（中心為 0、往上為正），各作品共用 */
+    const P = { x: 0, y: 0, lx: 0, ly: 0, vx: 0, vy: 0, inside: false, down: false, type: 'mouse', sx: 0, sy: 0, st: 0 };
+    const target = { x: 0.7, y: 0.3 }, cur = { x: 0.7, y: 0.3 };   // 0..1，高光光源位置
+    const overUI = el => !!(el && el.closest && el.closest('a, button, .about.open'));
+    function toP(cx, cy) {
+      const m = Math.min(innerWidth, innerHeight);
+      P.x = (cx / innerWidth - 0.5) * innerWidth / m;
+      P.y = -(cy / innerHeight - 0.5) * innerHeight / m;
+      target.x = cx / innerWidth; target.y = cy / innerHeight;
+    }
+    window.addEventListener('pointermove', e => {
+      const wasIn = P.inside;
+      toP(e.clientX, e.clientY);
+      P.type = e.pointerType;
+      if (e.pointerType !== 'touch') P.inside = P.down || !overUI(e.target);
+      if (!wasIn && P.inside) { P.lx = P.x; P.ly = P.y; }
+    }, { passive: true });
+    window.addEventListener('pointerdown', e => {
+      if (overUI(e.target)) return;
+      toP(e.clientX, e.clientY);
+      P.lx = P.x; P.ly = P.y;
+      P.type = e.pointerType; P.down = true; P.inside = true;
+      P.sx = e.clientX; P.sy = e.clientY; P.st = performance.now();
+      const w = ART[active]; if (w.down) w.down();
+    });
+    function release(e) {
+      if (!P.down) return;
+      P.down = false;
+      const w = ART[active];
+      if (e.type === 'pointerup' && w.tap && Math.hypot(e.clientX - P.sx, e.clientY - P.sy) < 12 &&
+          performance.now() - P.st < 400) w.tap();
+      if (e.pointerType === 'touch') P.inside = false;
+    }
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
+    window.addEventListener('mouseout', e => { if (!e.relatedTarget) P.inside = false; });
+    window.addEventListener('blur', () => { P.inside = false; P.down = false; });
+
+    /* =================== 01 液態金屬 =================== */
+    function liquidMetal() {
+      const METALS = [
+        [0.75, 0.77, 0.80],  // 銀
+        [0.035, 0.038, 0.045], // 黑鉻
+        [0.95, 0.95, 0.97],  // 珍珠白
+        [0.16, 0.62, 0.70],  // 湖水藍
+        [0.98, 0.55, 0.55],  // 水蜜桃紅
+        [0.88, 0.68, 0.26],  // 金
+        [0.85, 0.55, 0.47],  // 玫瑰金
+        [0.72, 0.38, 0.20],  // 紅銅
+        [0.45, 0.32, 0.18],  // 古銅
+        [0.92, 0.84, 0.66],  // 香檳金
+        [0.24, 0.26, 0.30],  // 鎗灰
+        [0.22, 0.35, 0.78],  // 鈦藍
+        [0.48, 0.28, 0.70],  // 陽極紫
+        [0.10, 0.48, 0.38],  // 祖母綠
+        [0.62, 0.08, 0.12]   // 金屬紅
+      ];
+      const lum = c => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+      // 隨機挑兩種不同、明暗有差距的金屬色；盡量不和上一組重複
+      function randomPair(prev) {
+        for (let tries = 0; tries < 40; tries++) {
+          const a = METALS[Math.floor(Math.random() * METALS.length)];
+          const b = METALS[Math.floor(Math.random() * METALS.length)];
+          if (a === b || Math.abs(lum(a) - lum(b)) < 0.15) continue;
+          if (prev && (prev.includes(a) || prev.includes(b)) && tries < 30) continue;
+          return [a, b];
+        }
+        return [METALS[0], METALS[1]];
+      }
+      const HOLD = 3.0, FADE = 1.2, PERIOD = HOLD + FADE;
+      const lerp3 = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+      // 每個階段的配色都記下來，倒帶時才能回到「剛剛」的顏色
+      const pairs = new Map([[0, [METALS[0], METALS[1]]]]);   // 開場：銀 + 黑鉻
+      function pairAt(i) {
+        if (!pairs.has(i)) pairs.set(i, randomPair(pairs.get(i - 1) || pairs.get(i + 1)));
+        return pairs.get(i);
+      }
+
+      // drive：往右移為正（加速），往左移為負（倒帶），不動時慢慢回到 0（正常）
+      let drive = 0, lastX = null;
+      function setDrive(x) {
+        const nx = x / innerWidth;
+        if (lastX !== null) drive = Math.max(-1, Math.min(1, drive + (nx - lastX) * 8));
+        lastX = nx;
+      }
+      // 凹洞：游標在液體上就出現（指到連結或面板時收起），離開視窗或放開手指就消失
+      const dentPos = { x: 0, y: 0 }, dentTarget = { x: 0, y: 0 };
+      let dentOn = 0, dentS = 0;
+      function setDent(x, y, on) {
+        const m = Math.min(innerWidth, innerHeight);
+        dentTarget.x = (x / innerWidth - 0.5) * (innerWidth / m) * 0.85;
+        dentTarget.y = -(y / innerHeight - 0.5) * (innerHeight / m) * 0.85;
+        if (dentS < 0.01) { dentPos.x = dentTarget.x; dentPos.y = dentTarget.y; }
+        dentOn = on;
+      }
+      window.addEventListener('pointermove', e => {
+        if (e.pointerType === 'touch') return;
+        setDrive(e.clientX);
+        setDent(e.clientX, e.clientY, overUI(e.target) ? 0 : 1);
+      }, { passive: true });
+      window.addEventListener('touchstart', e => {
+        const t = e.touches[0]; if (!t) return;
+        lastX = t.clientX / innerWidth;
+        setDent(t.clientX, t.clientY, overUI(e.target) ? 0 : 1);
+      }, { passive: true });
+      window.addEventListener('touchmove', e => {
+        const t = e.touches[0]; if (!t) return;
+        setDrive(t.clientX);
+        setDent(t.clientX, t.clientY, overUI(e.target) ? 0 : 1);
+      }, { passive: true });
+      window.addEventListener('touchend', e => { if (!e.touches.length) { dentOn = 0; lastX = null; } }, { passive: true });
+      window.addEventListener('mouseout', e => { if (!e.relatedTarget) { dentOn = 0; lastX = null; } });
+      window.addEventListener('blur', () => { dentOn = 0; });
+
+      let t = 0, flow = 0, clock = 0, rate = 1;
+      return {
+        names: ['uFlow', 'uA', 'uB', 'uDent'],
+        src: `
+          uniform float uFlow;      // 累積流動距離（右→左）
+          uniform vec3  uA;         // 目前雙色組合：顏色 A
+          uniform vec3  uB;         // 目前雙色組合：顏色 B
+          uniform vec3  uDent;      // 滑鼠凹洞：xy = 位置，z = 強度 0..1
+
+          // 滑鼠位置的液體凹洞：中央下陷，外圈微微隆起
+          float dent(vec2 p){
+            vec2 d = p - uDent.xy;
+            float r = length(d);
+            const float R = 0.075;
+            float hole = exp(-(r * r) / (R * R));
+            float k = r - R * 1.7;
+            float rim  = exp(-(k * k) / (R * R * 0.35));
+            return uDent.z * (-0.11 * hole + 0.025 * rim);
+          }
+          float height(vec2 p){
+            float dn = dent(p);
+            p.x += uFlow;
+            vec2 q = vec2(fbm(p + vec2(0.0, uTime * 0.03)),
+                          fbm(p + vec2(5.2, 1.3) - vec2(0.0, uTime * 0.025)));
+            return fbm(p + 1.6 * q + vec2(uFlow * 0.35, 0.0)) + dn;
+          }
+          // 雙色金屬反射帶
+          vec3 metal(float env){
+            float b = smoothstep(0.25, 0.75, 0.5 + 0.5 * sin(env * 6.2831853));   // 色帶邊緣更俐落
+            return mix(uA, uB, b);
+          }
+          vec3 shade(vec3 n, float h, vec2 p){
+            vec3 r = reflect(vec3(0.0, 0.0, -1.0), n);
+            vec3 base = metal(r.x * 0.22 + r.y * 0.3 + h * 0.55);
+            float m = min(uRes.x, uRes.y);
+            vec2 mp = mouseP(m) * 0.85;
+            vec3 L = normalize(vec3(mp - p, 1.6));
+            float diff = max(dot(n, L), 0.0);
+            float spec = pow(max(dot(reflect(-L, n), vec3(0.0, 0.0, 1.0)), 0.0), 80.0);
+            float rim  = pow(1.0 - n.z, 2.0);
+            vec3 col = base * (0.42 + 0.78 * diff);
+            col += mix(vec3(1.0), base, 0.25) * spec * 1.1;
+            col += mix(uA, uB, 0.5) * rim * 0.3;
+            return col;
+          }
+          void main(){
+            float m = min(uRes.x, uRes.y);
+            vec2 sp = (gl_FragCoord.xy - 0.5 * uRes) / m;
+            vec2 p = sp * 0.85;
+            float e = 0.01;
+            float h  = height(p);
+            float hx = height(p + vec2(e, 0.0));
+            float hy = height(p + vec2(0.0, e));
+            vec3 n = normalize(vec3(-(hx - h) / e, -(hy - h) / e, 0.9));
+            gl_FragColor = vec4(finish(shade(n, h, p), sp), 1.0);
+          }`,
+        frame(dt, U) {
+          // 時間倍率：右移最高 ×3.5 加速；左移最低 ×-2 倒帶；不動時回到 ×1
+          drive *= Math.pow(0.12, dt);
+          const targetRate = drive >= 0 ? 1 + 2.5 * drive : 1 + 3 * drive;
+          rate += (targetRate - rate) * (1 - Math.pow(0.002, dt));
+          t     += dt * speed * rate;         // 液面起伏
+          flow  += dt * speed * 0.08 * rate;  // 右→左流動（負值即倒流）
+          clock += dt * rate;                 // 換色時鐘（負值即倒回上一組顏色）
+
+          // 凹洞緊跟游標、柔和地出現與消失
+          const kd = 1 - Math.pow(0.0002, dt);
+          dentPos.x += (dentTarget.x - dentPos.x) * kd;
+          dentPos.y += (dentTarget.y - dentPos.y) * kd;
+          dentS += (dentOn - dentS) * (1 - Math.pow(0.004, dt));
+
+          const st = Math.floor(clock / PERIOD);
+          const curPair = pairAt(st), nextPair = pairAt(st + 1);
+          const local = clock - st * PERIOD;
+          let f = local < HOLD ? 0 : (local - HOLD) / FADE;
+          f = f * f * (3 - 2 * f);
+          gl.uniform1f(U.uTime, t);
+          gl.uniform1f(U.uFlow, flow);
+          gl.uniform3fv(U.uA, lerp3(curPair[0], nextPair[0], f));
+          gl.uniform3fv(U.uB, lerp3(curPair[1], nextPair[1], f));
+          gl.uniform3f(U.uDent, dentPos.x, dentPos.y, dentS);
+        }
+      };
+    }
+
+    /* =================== 02 引力：會互相融合的水銀 =================== */
+    function gravity() {
+      const MAX = 12, balls = [], arr = new Float32Array(MAX * 3);
+      let time = 0;
+      function add(x, y, r) {
+        balls.push({ x, y, vx: 0, vy: 0, r: 0, tr: r, s: Math.random() * 100 });
+        const alive = balls.filter(b => b.tr > 0);
+        if (alive.length > MAX - 2) alive[0].tr = 0;   // 太多時最舊的一滴慢慢蒸發
+        while (balls.length > MAX) balls.shift();
+      }
+      return {
+        names: ['uBalls'],
+        src: `
+          uniform vec3 uBalls[12];   // xy = 位置，z = 半徑
+          float field(vec2 p, out vec2 g){
+            float f = 0.0; g = vec2(0.0);
+            for (int i = 0; i < 12; i++){
+              vec3 b = uBalls[i];
+              vec2 d = p - b.xy;
+              float q = dot(d, d) + 1e-5;
+              float r2 = b.z * b.z;
+              f += r2 / q;
+              g -= 2.0 * r2 * d / (q * q);
+            }
+            return f;
+          }
+          // 攝影棚環境：上方冷白天光、下方暗地面、地平線一圈暖橘光、兩盞柔光箱
+          vec3 env(vec3 r, vec3 L){
+            float y = r.y;
+            vec3 c = mix(vec3(0.1, 0.1, 0.115), vec3(0.82, 0.84, 0.9), smoothstep(-0.75, 0.75, y));
+            c *= 0.75 + 0.25 * smoothstep(-0.62, -0.58, y);           // 地平線下的地面稍暗
+            c += vec3(1.0, 0.46, 0.2) * exp(-abs(y + 0.6) * 16.0) * 0.6;
+            c += smoothstep(0.86, 0.93, dot(r, normalize(vec3(-0.55, 0.6, 0.58)))) * 1.3;
+            c += vec3(0.75, 0.85, 1.0) * smoothstep(0.93, 0.97, dot(r, normalize(vec3(0.65, 0.25, 0.72)))) * 0.7;
+            c += pow(max(dot(r, L), 0.0), 40.0) * 1.4;
+            return c;
+          }
+          void main(){
+            float m = min(uRes.x, uRes.y);
+            vec2 p = (gl_FragCoord.xy - 0.5 * uRes) / m;
+            vec2 g; float f = field(p, g);
+            vec2 mp = mouseP(m);
+
+            vec3 bg = vec3(0.016, 0.016, 0.022) + vec3(0.1, 0.05, 0.035) * smoothstep(0.12, 0.95, f);
+            bg += vec3(0.02, 0.022, 0.03) * smoothstep(1.2, 0.0, length(p - mp));
+
+            // 把場轉成半球狀的高度，算出表面法線
+            float H = max(1.0 - 1.0 / max(f, 1e-4), 0.0);
+            vec2 gz = 0.1 * (g / (f * f)) / (2.0 * sqrt(max(H, 0.002)));
+            vec3 n = normalize(vec3(-gz, 1.0));
+            vec3 r = reflect(vec3(0.0, 0.0, -1.0), n);
+            vec3 L = normalize(vec3(mp - p, 0.9));
+            vec3 col = env(r, L) * (0.8 + 0.2 * (1.0 - n.z));
+
+            float edge = (f - 1.0) / max(length(g), 1e-3);   // 到表面邊緣的距離（近似）
+            float aa = clamp(0.5 + edge * m / 1.5, 0.0, 1.0);
+            gl_FragColor = vec4(finish(mix(bg, col, aa), p), 1.0);
+          }`,
+        enter() {
+          if (balls.length) return;
+          const [ex, ey] = ext();
+          for (let i = 0; i < 7; i++) add((Math.random() * 2 - 1) * ex * 0.6, (Math.random() * 2 - 1) * ey * 0.6, 0.07 + Math.random() * 0.07);
+        },
+        down() { add(P.x, P.y, 0.06 + Math.random() * 0.06); },
+        frame(dt, U) {
+          time += dt * speed;
+          const [ex, ey] = ext();
+          for (const b of balls) {
+            let ax = Math.sin(time * 0.37 + b.s) * 0.06, ay = Math.cos(time * 0.29 + b.s * 1.3) * 0.06;
+            if (P.inside) {
+              const dx = P.x - b.x, dy = P.y - b.y, d = Math.hypot(dx, dy) + 1e-4;
+              const f = Math.min(1.6, 0.12 / (d * d + 0.02));
+              ax += dx / d * f; ay += dy / d * f;
+              const near = Math.exp(-d * d / 0.03);   // 快速劃過會把附近的水銀甩開
+              b.vx += P.vx * near * dt * 3; b.vy += P.vy * near * dt * 3;
+            } else { ax -= b.x * 0.15; ay -= b.y * 0.15; }
+            for (const o of balls) {
+              if (o === b) continue;
+              const dx = b.x - o.x, dy = b.y - o.y, d = Math.hypot(dx, dy) + 1e-4, min = (b.r + o.r) * 0.75;
+              if (d < min) { const k = (min - d) * 6; ax += dx / d * k; ay += dy / d * k; }
+            }
+            const wx = ex - b.r, wy = ey - b.r;
+            if (b.x > wx) ax -= (b.x - wx) * 20; if (b.x < -wx) ax += (-wx - b.x) * 20;
+            if (b.y > wy) ay -= (b.y - wy) * 20; if (b.y < -wy) ay += (-wy - b.y) * 20;
+            const damp = Math.pow(0.4, dt);
+            b.vx = (b.vx + ax * dt * speed) * damp; b.vy = (b.vy + ay * dt * speed) * damp;
+            b.x += b.vx * dt; b.y += b.vy * dt;
+            b.r += (b.tr - b.r) * (1 - Math.pow(0.05, dt));
+          }
+          for (let i = balls.length - 1; i >= 0; i--) if (balls[i].tr === 0 && balls[i].r < 0.004) balls.splice(i, 1);
+          arr.fill(0);
+          balls.forEach((b, i) => { arr[i * 3] = b.x; arr[i * 3 + 1] = b.y; arr[i * 3 + 2] = b.r; });
+          gl.uniform3fv(U.uBalls, arr);
+          gl.uniform1f(U.uTime, time);
+        }
+      };
+    }
+
+    /* =================== 03 漣漪：會互相干涉的波紋 =================== */
+    function ripple() {
+      const N = 24, drops = [], out = new Float32Array(N * 4);
+      let time = 0, head = 0, lastX = null, lastY = 0, rain = 0.6;
+      for (let i = 0; i < N; i++) drops.push({ x: 0, y: 0, t: -99, a: 0 });
+      function drop(x, y, a) { drops[head] = { x, y, t: time, a }; head = (head + 1) % N; }
+      return {
+        names: ['uDrops'],
+        src: `
+          uniform vec4 uDrops[24];   // xy = 位置，z = 經過時間，w = 強度
+          float waves(vec2 p){
+            float h = 0.0;
+            for (int i = 0; i < 24; i++){
+              vec4 d = uDrops[i];
+              if (d.w <= 0.0) continue;
+              float r = length(p - d.xy);
+              float x = r - d.z * 0.32;                       // 波前往外擴散
+              float env = exp(-x * x * 45.0) * exp(-d.z * 0.45) / (1.0 + r * 5.0);
+              h += d.w * env * sin(x * 70.0) * smoothstep(0.0, 0.15, d.z);
+            }
+            return h;
+          }
+          float height(vec2 p){
+            return waves(p) * 0.006 + (fbm(p * 3.0 + vec2(uTime * 0.06, uTime * 0.04)) - 0.5) * 0.008;
+          }
+          // 水底光紋：兩層「脊狀」雜訊相乘
+          float caustic(vec2 p){
+            float t = uTime * 0.35;
+            vec2 q = p * 4.0;
+            float a = 1.0 - abs(noise(q + vec2(t, t * 0.7)) * 2.0 - 1.0);
+            float b = 1.0 - abs(noise(mat2(0.8, 0.6, -0.6, 0.8) * q * 1.3 + vec2(-t * 0.8, t * 0.5) + 7.0) * 2.0 - 1.0);
+            return pow(a, 8.0) * 0.6 + pow(b, 8.0) * 0.4 + pow(a * b, 4.0) * 0.8;
+          }
+          void main(){
+            float m = min(uRes.x, uRes.y);
+            vec2 p = (gl_FragCoord.xy - 0.5 * uRes) / m;
+            float e = 0.002;
+            float h  = height(p);
+            float hx = height(p + vec2(e, 0.0));
+            float hy = height(p + vec2(0.0, e));
+            vec3 n = normalize(vec3(-(hx - h) / e, -(hy - h) / e, 1.0));
+
+            vec2 fp = p + n.xy * 0.18;                       // 透過水面看到的折射水底
+            vec3 floorC = mix(vec3(0.004, 0.025, 0.045), vec3(0.02, 0.19, 0.23), fbm(fp * 1.4 + 3.0));
+            floorC *= 0.5 + 1.6 * caustic(fp + n.xy * 0.3);
+
+            vec2 mp = mouseP(m);
+            vec3 L = normalize(vec3(mp - p, 0.7));
+            float sd = max(dot(reflect(-L, n), vec3(0.0, 0.0, 1.0)), 0.0);
+            float fres = pow(1.0 - n.z, 1.2);
+            vec3 col = floorC
+                     + vec3(1.0, 0.96, 0.88) * (pow(sd, 1400.0) * 1.3 + pow(sd, 60.0) * 0.06)
+                     + vec3(0.45, 0.65, 0.78) * fres * 3.0;
+            gl_FragColor = vec4(finish(col, p), 1.0);
+          }`,
+        enter() { lastX = null; },
+        down() { drop(P.x, P.y, 1.0); },
+        frame(dt, U) {
+          time += dt * speed;
+          if (P.inside && !P.down) {
+            if (lastX === null) { lastX = P.x; lastY = P.y; }
+            else if (Math.hypot(P.x - lastX, P.y - lastY) > 0.06) { drop(P.x, P.y, 0.3); lastX = P.x; lastY = P.y; }
+          } else if (P.down) {
+            if (lastX === null || Math.hypot(P.x - lastX, P.y - lastY) > 0.05) { drop(P.x, P.y, 0.45); lastX = P.x; lastY = P.y; }
+          } else lastX = null;
+          rain -= dt * speed;
+          if (rain <= 0) {   // 偶爾一滴雨，畫面不會完全靜止
+            rain = 1.4 + Math.random() * 2.2;
+            const [ex, ey] = ext();
+            drop((Math.random() * 2 - 1) * ex * 0.85, (Math.random() * 2 - 1) * ey * 0.85, 0.4);
+          }
+          drops.forEach((d, i) => {
+            const age = time - d.t;
+            out[i * 4] = d.x; out[i * 4 + 1] = d.y; out[i * 4 + 2] = age; out[i * 4 + 3] = age < 9 ? d.a : 0;
+          });
+          gl.uniform4fv(U.uDrops, out);
+          gl.uniform1f(U.uTime, time);
+        }
+      };
+    }
+
+    /* =================== 04 萬花：鏡面對稱 =================== */
+    function kaleidoscope() {
+      const PALS = [
+        [[1.0, 0.55, 0.25], [0.98, 0.42, 0.62], [0.32, 0.12, 0.48]],   // 橘、粉、紫（網站最初的配色）
+        [[0.92, 0.94, 0.97], [0.12, 0.13, 0.16], [0.55, 0.6, 0.68]],   // 鉻銀
+        [[0.1, 0.58, 0.64], [0.02, 0.07, 0.18], [0.98, 0.6, 0.55]],    // 湖水藍、深海、蜜桃
+        [[0.95, 0.78, 0.4], [0.24, 0.1, 0.05], [0.82, 0.34, 0.2]]      // 金、古銅、紅銅
+      ];
+      let pi = 0, time = 0, rot = 0, spin = 0, seg = 6, zoom = 1.3, segT = 6, zoomT = 1.3;
+      const pal = PALS[0].map(c => c.slice());
+      return {
+        names: ['uC0', 'uC1', 'uC2', 'uSeg', 'uZoom', 'uRot'],
+        src: `
+          uniform vec3 uC0, uC1, uC2;
+          uniform float uSeg, uZoom, uRot;
+          vec3 pal(float t){
+            t = fract(t) * 3.0;
+            if (t < 1.0) return mix(uC0, uC1, smoothstep(0.0, 1.0, t));
+            if (t < 2.0) return mix(uC1, uC2, smoothstep(1.0, 2.0, t));
+            return mix(uC2, uC0, smoothstep(2.0, 3.0, t));
+          }
+          vec3 art(vec2 sp, float seg){  // seg 可為小數
+            float r = length(sp);
+            float a = atan(sp.y, sp.x) + uRot;
+            a = abs(mod(a + 3.1415927, 6.2831853) - 3.1415927);   // 先沿一條軸鏡射，接縫消失
+            float s = 6.2831853 / seg;
+            a = abs(mod(a, s) - 0.5 * s);                    // 再摺進一片鏡面：鏡面數可以是小數，變化連續
+            vec2 q = vec2(cos(a), sin(a)) * r * uZoom;
+            q.x -= uTime * 0.05;
+            vec2 w = vec2(fbm(q * 2.0 + vec2(0.0, uTime * 0.06)),
+                          fbm(q * 2.0 + vec2(5.2, 1.3) - uTime * 0.05));
+            float f = fbm(q * 1.8 + 1.7 * w);
+            vec3 c = pal(f * 1.8 + r * 0.2 - uTime * 0.03);
+            c *= 0.55 + 0.75 * w.x;                          // 起伏的明暗
+            float l = abs(fract(f * 7.0) - 0.5);
+            return mix(c, vec3(1.0, 0.95, 0.88), smoothstep(0.05, 0.0, l) * 0.55);   // 細亮線
+          }
+          void main(){
+            float m = min(uRes.x, uRes.y);
+            vec2 sp = (gl_FragCoord.xy - 0.5 * uRes) / m;
+            vec3 col = art(sp, uSeg);
+            col += vec3(1.0, 0.9, 0.8) * exp(-length(sp) * 6.0) * 0.25;
+            gl_FragColor = vec4(finish(col, sp), 1.0);
+          }`,
+        tap() { pi = (pi + 1) % PALS.length; },
+        frame(dt, U) {
+          time += dt * speed;
+          const dragging = P.down && P.type === 'mouse';
+          if (!dragging && P.inside) { segT = 3 + cur.x * 9; zoomT = 2.4 - cur.y * 1.8; }
+          // 拖曳旋轉帶慣性，放開後慢慢停下，不會一頓一頓
+          spin += ((dragging ? P.vx * 3 : 0) - spin) * (1 - Math.pow(dragging ? 0.002 : 0.3, dt));
+          seg += (segT - seg) * (1 - Math.pow(0.25, dt));   // 鏡面數連續、柔和地變化
+          zoom += (zoomT - zoom) * (1 - Math.pow(0.25, dt));
+          rot += (spin + 0.04 * speed) * dt;
+          const k = 1 - Math.pow(0.15, dt);
+          pal.forEach((c, i) => c.forEach((v, j) => c[j] = v + (PALS[pi][i][j] - v) * k));
+          gl.uniform1f(U.uTime, time);
+          gl.uniform3fv(U.uC0, pal[0]); gl.uniform3fv(U.uC1, pal[1]); gl.uniform3fv(U.uC2, pal[2]);
+          gl.uniform1f(U.uSeg, seg); gl.uniform1f(U.uZoom, zoom); gl.uniform1f(U.uRot, rot);
+        }
+      };
+    }
+
+    const ART = [liquidMetal(), gravity(), ripple(), kaleidoscope()];
+    let active = 0, pending = -1, fadeT = 0;
+    function activate(i) {
+      const w = ART[i];
+      if (!w.prog && !build(w)) return;
+      active = i;
+      gl.useProgram(w.prog);
+      if (w.enter) w.enter();
+    }
+    activate(0);
+    // 切換作品：先淡到黑，換 shader（第一次會編譯），再淡回來
+    art.select = i => {
+      if (i === active && pending < 0) return;
+      if (reduced) { activate(i); return; }
+      pending = i;
+      fader.classList.add('on');
+      clearTimeout(fadeT);
+      fadeT = setTimeout(() => {
+        activate(pending); pending = -1;
+        requestAnimationFrame(() => fader.classList.remove('on'));
+      }, 380);
+    };
+
+    let running = true, last = performance.now(), frames = 0, acc = 0;
+    document.addEventListener('visibilitychange', () => {
+      running = !document.hidden;
+      if (running) { last = performance.now(); requestAnimationFrame(loop); }
+    });
+
+    function loop(now) {
+      if (!running) return;
+      const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
+      last = now;
+
+      const k = 1 - Math.pow(0.04, dt);
+      cur.x += (target.x - cur.x) * k;
+      cur.y += (target.y - cur.y) * k;
+      if (dt > 0) {
+        P.vx = Math.max(-6, Math.min(6, (P.x - P.lx) / dt));
+        P.vy = Math.max(-6, Math.min(6, (P.y - P.ly) / dt));
+      }
+      P.lx = P.x; P.ly = P.y;
+
+      const w = ART[active];
+      gl.uniform2f(w.U.uRes, canvas.width, canvas.height);
+      gl.uniform2f(w.U.uMouse, cur.x, cur.y);
+      w.frame(dt, w.U);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+      acc += dt; frames++;
+      if (frames >= 60) {
+        const avg = acc / frames;
+        // 自適應畫質：掉幀才小幅降低，順暢時逐步回到最高畫質
+        if (avg > 1 / 48 && scale > 0.75) { scale = Math.max(0.75, scale * 0.9); resize(); }
+        else if (avg < 1 / 57 && scale < maxScale) { scale = Math.min(maxScale, scale * 1.08); resize(); }
+        frames = 0; acc = 0;
+      }
+      requestAnimationFrame(loop);
     }
     requestAnimationFrame(loop);
   }
-  requestAnimationFrame(loop);
 })();
 </script>
 </body>
