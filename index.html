@@ -27,6 +27,7 @@
     -webkit-font-smoothing: antialiased;
   }
   canvas#bg {
+    touch-action: none;
     position: fixed; inset: 0;
     width: 100%; height: 100%;
     display: block;
@@ -204,6 +205,7 @@
     uniform vec2  uMouse;     // 滑鼠位置 0..1
     uniform vec3  uA;         // 目前雙色組合：顏色 A
     uniform vec3  uB;         // 目前雙色組合：顏色 B
+    uniform vec3  uDent;      // 滑鼠凹洞：xy = 位置，z = 強度 0..1
 
     float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
     float noise(vec2 p){
@@ -218,11 +220,22 @@
       for (int i = 0; i < 4; i++){ v += a * noise(p); p = m * p; a *= 0.5; }
       return v;
     }
+    // 滑鼠位置的液體凹洞：中央下陷，外圈微微隆起
+    float dent(vec2 p){
+      vec2 d = p - uDent.xy;
+      float r = length(d);
+      const float R = 0.075;
+      float hole = exp(-(r * r) / (R * R));
+      float k = r - R * 1.7;
+      float rim  = exp(-(k * k) / (R * R * 0.35));
+      return uDent.z * (-0.11 * hole + 0.025 * rim);
+    }
     float height(vec2 p){
+      float dn = dent(p);
       p.x += uFlow;
       vec2 q = vec2(fbm(p + vec2(0.0, uTime * 0.03)),
                     fbm(p + vec2(5.2, 1.3) - vec2(0.0, uTime * 0.025)));
-      return fbm(p + 1.6 * q + vec2(uFlow * 0.35, 0.0));
+      return fbm(p + 1.6 * q + vec2(uFlow * 0.35, 0.0)) + dn;
     }
 
     // 雙色金屬反射帶
@@ -283,7 +296,7 @@
   gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 
   const U = {};
-  ['uRes', 'uTime', 'uFlow', 'uMouse', 'uA', 'uB'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
+  ['uRes', 'uTime', 'uFlow', 'uMouse', 'uA', 'uB', 'uDent'].forEach(n => U[n] = gl.getUniformLocation(prog, n));
 
   /* 解析度：限制 DPR，並依實際幀率自動調整 */
   const isMobile = matchMedia('(pointer: coarse)').matches || innerWidth < 768;
@@ -333,21 +346,57 @@
   }
   const HOLD = 3.0, FADE = 1.2, PERIOD = HOLD + FADE;
   const lerp3 = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
-  let curPair = [METALS[0], METALS[1]];   // 開場：銀 + 黑鉻
-  let nextPair = randomPair(curPair);
-  let stage = 0;
+  // 每個階段的配色都記下來，倒帶時才能回到「剛剛」的顏色
+  const history = new Map([[0, [METALS[0], METALS[1]]]]);   // 開場：銀 + 黑鉻
+  function pairAt(i) {
+    if (!history.has(i)) history.set(i, randomPair(history.get(i - 1) || history.get(i + 1)));
+    return history.get(i);
+  }
 
   /* 滑鼠 / 觸控互動 */
   const target = { x: 0.7, y: 0.3 }, cur = { x: 0.7, y: 0.3 };
-  let moving = 0;                    // 1 = 滑鼠正在移動，停下後漸漸歸 0
-  function setPointer(x, y) { target.x = x / innerWidth; target.y = y / innerHeight; moving = 1; }
-  window.addEventListener('pointermove', e => setPointer(e.clientX, e.clientY), { passive: true });
-  window.addEventListener('touchmove', e => { const t = e.touches[0]; if (t) setPointer(t.clientX, t.clientY); }, { passive: true });
+  // drive：往右移為正（加速），往左移為負（倒帶），不動時慢慢回到 0（正常）
+  let drive = 0, lastX = null;
+  function setPointer(x, y) {
+    const nx = x / innerWidth;
+    if (lastX !== null) drive = Math.max(-1, Math.min(1, drive + (nx - lastX) * 8));
+    lastX = nx;
+    target.x = nx; target.y = y / innerHeight;
+  }
+  // 凹洞：游標在液體上就出現（指到連結或面板時收起），離開視窗或放開手指就消失
+  const dentPos = { x: 0, y: 0 }, dentTarget = { x: 0, y: 0 };
+  let dentOn = 0, dentS = 0;
+  function setDent(x, y, on) {
+    const m = Math.min(innerWidth, innerHeight);
+    dentTarget.x = (x / innerWidth - 0.5) * (innerWidth / m) * 0.85;
+    dentTarget.y = -(y / innerHeight - 0.5) * (innerHeight / m) * 0.85;
+    if (dentS < 0.01) { dentPos.x = dentTarget.x; dentPos.y = dentTarget.y; }
+    dentOn = on;
+  }
+  const overUI = el => !!(el && el.closest && el.closest('a, button, .panel'));
+  window.addEventListener('pointermove', e => {
+    if (e.pointerType === 'touch') return;
+    setPointer(e.clientX, e.clientY);
+    setDent(e.clientX, e.clientY, overUI(e.target) ? 0 : 1);
+  }, { passive: true });
+  window.addEventListener('touchstart', e => {
+    const t = e.touches[0]; if (!t) return;
+    lastX = t.clientX / innerWidth;
+    setDent(t.clientX, t.clientY, overUI(e.target) ? 0 : 1);
+  }, { passive: true });
+  window.addEventListener('touchmove', e => {
+    const t = e.touches[0]; if (!t) return;
+    setPointer(t.clientX, t.clientY);
+    setDent(t.clientX, t.clientY, overUI(e.target) ? 0 : 1);
+  }, { passive: true });
+  window.addEventListener('touchend', e => { if (!e.touches.length) { dentOn = 0; lastX = null; } }, { passive: true });
+  window.addEventListener('mouseout', e => { if (!e.relatedTarget) { dentOn = 0; lastX = null; } });
+  window.addEventListener('blur', () => { dentOn = 0; });
 
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const speed = reduced ? 0.25 : 1.0;
 
-  let running = true, last = performance.now(), t = 0, flow = 0, clock = 0;
+  let running = true, last = performance.now(), t = 0, flow = 0, clock = 0, rate = 1;
   let frames = 0, acc = 0;
   document.addEventListener('visibilitychange', () => {
     running = !document.hidden;
@@ -358,20 +407,27 @@
     if (!running) return;
     const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
-    t += dt * speed;
+
+    // 時間倍率：右移最高 ×3.5 加速；左移最低 ×-2 倒帶；不動時回到 ×1
+    drive *= Math.pow(0.12, dt);
+    const targetRate = drive >= 0 ? 1 + 2.5 * drive : 1 + 3 * drive;
+    rate += (targetRate - rate) * (1 - Math.pow(0.002, dt));
+    t     += dt * speed * rate;         // 液面起伏
+    flow  += dt * speed * 0.08 * rate;  // 右→左流動（負值即倒流）
+    clock += dt * rate;                 // 換色時鐘（負值即倒回上一組顏色）
 
     const k = 1 - Math.pow(0.04, dt);
     cur.x += (target.x - cur.x) * k;
     cur.y += (target.y - cur.y) * k;
 
-    // 滑鼠移動時：流動速度與換色速度都 ×1.2
-    moving *= Math.pow(0.02, dt);
-    const mult = 1 + 0.2 * Math.min(1, moving);
-    flow  += dt * speed * 0.08 * mult;
-    clock += dt * mult;
+    // 凹洞緊跟游標、柔和地出現與消失
+    const kd = 1 - Math.pow(0.0002, dt);
+    dentPos.x += (dentTarget.x - dentPos.x) * kd;
+    dentPos.y += (dentTarget.y - dentPos.y) * kd;
+    dentS += (dentOn - dentS) * (1 - Math.pow(0.004, dt));
 
     const st = Math.floor(clock / PERIOD);
-    if (st !== stage) { stage = st; curPair = nextPair; nextPair = randomPair(curPair); }
+    const curPair = pairAt(st), nextPair = pairAt(st + 1);
     const local = clock - st * PERIOD;
     let f = local < HOLD ? 0 : (local - HOLD) / FADE;
     f = f * f * (3 - 2 * f);
@@ -383,6 +439,7 @@
     gl.uniform2f(U.uMouse, cur.x, cur.y);
     gl.uniform3fv(U.uA, A);
     gl.uniform3fv(U.uB, B);
+    gl.uniform3f(U.uDent, dentPos.x, dentPos.y, dentS);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
     acc += dt; frames++;
